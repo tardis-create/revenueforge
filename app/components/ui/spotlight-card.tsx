@@ -7,12 +7,14 @@ interface SpotlightCardProps {
   children: React.ReactNode
   className?: string
   spotlightColor?: string
+  onClick?: () => void
 }
 
 export function SpotlightCard({
   children,
   className,
   spotlightColor = "rgba(120, 119, 198, 0.15)",
+  onClick,
 }: SpotlightCardProps) {
   const divRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -33,6 +35,7 @@ export function SpotlightCard({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={onClick}
       className={cn(
         "relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm",
         className

@@ -4,14 +4,17 @@ import React, { useRef, useState } from "react"
 import { motion, useMotionValue, useSpring } from "framer-motion"
 import { cn } from "@/lib/cn"
 
-interface MagnetButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagnetButtonProps {
   children: React.ReactNode
   className?: string
   magnetStrength?: number
+  onClick?: () => void
+  type?: "button" | "submit" | "reset"
+  disabled?: boolean
 }
 
 export const MagnetButton = React.forwardRef<HTMLButtonElement, MagnetButtonProps>(
-  ({ children, className, magnetStrength = 0.3, ...props }, ref) => {
+  ({ children, className, magnetStrength = 0.3, onClick, type = "button", disabled }, ref) => {
     const buttonRef = useRef<HTMLButtonElement>(null)
     const [isHovered, setIsHovered] = useState(false)
 
@@ -48,6 +51,9 @@ export const MagnetButton = React.forwardRef<HTMLButtonElement, MagnetButtonProp
         onMouseLeave={handleMouseLeave}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        onClick={onClick}
+        type={type}
+        disabled={disabled}
         className={cn(
           "relative px-6 py-3 font-medium transition-colors",
           "bg-gradient-to-b from-zinc-800 to-zinc-900",
@@ -58,7 +64,6 @@ export const MagnetButton = React.forwardRef<HTMLButtonElement, MagnetButtonProp
           "hover:shadow-xl hover:shadow-black/30",
           className
         )}
-        {...props}
       >
         {children}
       </motion.button>

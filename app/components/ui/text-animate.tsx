@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
-import { motion, useInView, useAnimation } from "framer-motion"
+import React, { useEffect, useRef } from "react"
+import { motion, useInView, useAnimation, type Easing } from "framer-motion"
 import { cn } from "@/lib/cn"
 
 interface TextAnimateProps {
@@ -31,6 +31,8 @@ export function TextAnimate({
 
   const words = children.split(" ")
 
+  const ease: Easing = "easeOut"
+
   const variants = {
     hidden: {
       opacity: 0,
@@ -46,7 +48,7 @@ export function TextAnimate({
       transition: {
         delay: delay + i * 0.1,
         duration,
-        ease: "easeOut",
+        ease,
       },
     }),
   }

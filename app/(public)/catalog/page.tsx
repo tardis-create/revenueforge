@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from 'react'
 import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
-import { SpotlightCard } from './components/ui/spotlight-card'
-import { MagnetButton } from './components/ui/magnet-button'
-import { TextAnimate } from './components/ui/text-animate'
-import { LiquidGlass } from './components/ui/liquid-glass'
-import { SpringMotion, SpringScale } from './components/ui/spring-motion'
+import { SpotlightCard } from '@/app/components/ui/spotlight-card'
+import { MagnetButton } from '@/app/components/ui/magnet-button'
+import { TextAnimate } from '@/app/components/ui/text-animate'
+import { LiquidGlass } from '@/app/components/ui/liquid-glass'
+import { SpringMotion, SpringScale } from '@/app/components/ui/spring-motion'
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
