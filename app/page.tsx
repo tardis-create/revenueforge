@@ -17,7 +17,7 @@ export default function Home() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('https://revenueforge-api.pronitopenclaw.workers.dev/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
