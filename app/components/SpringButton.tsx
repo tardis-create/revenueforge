@@ -11,11 +11,25 @@ interface SpringButtonProps {
   disabled?: boolean
   className?: string
   type?: "button" | "submit" | "reset"
+  "aria-label"?: string
+  "aria-describedby"?: string
+  "aria-disabled"?: boolean
 }
 
 export const SpringButton = forwardRef<HTMLButtonElement, SpringButtonProps>(
-  ({ variant = "primary", size = "md", children, className = "", onClick, disabled, type = "button" }, ref) => {
-    const baseStyles = "font-medium transition-colors relative overflow-hidden"
+  ({ 
+    variant = "primary", 
+    size = "md", 
+    children, 
+    className = "", 
+    onClick, 
+    disabled, 
+    type = "button",
+    "aria-label": ariaLabel,
+    "aria-describedby": ariaDescribedBy,
+    "aria-disabled": ariaDisabled
+  }, ref) => {
+    const baseStyles = "font-medium transition-colors relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
 
     const variants = {
       primary: "bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 text-white hover:border-purple-400/50",
@@ -35,7 +49,10 @@ export const SpringButton = forwardRef<HTMLButtonElement, SpringButtonProps>(
         type={type}
         onClick={onClick}
         disabled={disabled}
-        whileHover={{ 
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-disabled={ariaDisabled ?? disabled}
+        whileHover={disabled ? {} : { 
           scale: 1.02,
           transition: { 
             type: "spring",
@@ -43,7 +60,7 @@ export const SpringButton = forwardRef<HTMLButtonElement, SpringButtonProps>(
             damping: 17 
           }
         }}
-        whileTap={{ 
+        whileTap={disabled ? {} : { 
           scale: 0.98,
           transition: { 
             type: "spring",
@@ -68,6 +85,7 @@ export const SpringButton = forwardRef<HTMLButtonElement, SpringButtonProps>(
               ? "radial-gradient(circle at center, rgba(168, 85, 247, 0.3) 0%, transparent 70%)"
               : "radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
           }}
+          aria-hidden="true"
         />
         <span className="relative z-10">{children}</span>
       </motion.button>

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
+import { useDebounce, useOnlineStatus } from '@/lib/hooks'
 import { 
   BlurText, 
   AnimatedContent
@@ -16,47 +17,73 @@ import {
   ErrorState,
   HamburgerMenu,
   StaggerContainer,
-  StaggerItem
+  StaggerItem,
+  TimeoutState
 } from '@/app/components'
+
+const REQUEST_TIMEOUT = 15000 // 15 seconds
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isTimeout, setIsTimeout] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [filters, setFilters] = useState<ProductFilters>({
     search: '',
     category: '',
     industry: '',
   })
+  
+  const isOnline = useOnlineStatus()
+  const debouncedSearch = useDebounce(filters.search, 300)
 
   // Fetch products
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
-        const params = new URLSearchParams()
-        if (filters.search) params.append('search', filters.search)
-        if (filters.category) params.append('category', filters.category)
-        if (filters.industry) params.append('industry', filters.industry)
-        
-        const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`)
-        const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
-        
-        if (data.success && data.data) {
-          setProducts(data.data)
-        } else {
-          setError(data.error || 'Failed to load products')
-        }
-      } catch (err) {
-        setError('Failed to load products')
-      } finally {
-        setLoading(false)
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      setIsTimeout(false)
+      
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+      
+      const params = new URLSearchParams()
+      if (debouncedSearch) params.append('search', debouncedSearch)
+      if (filters.category) params.append('category', filters.category)
+      if (filters.industry) params.append('industry', filters.industry)
+      
+      const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`, {
+        signal: controller.signal,
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
+      
+      const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
+      
+      if (data.success && data.data) {
+        setProducts(data.data)
+      } else {
+        setError(data.error || 'Failed to load products')
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setIsTimeout(true)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load products')
+      }
+    } finally {
+      setLoading(false)
     }
+  }, [debouncedSearch, filters.category, filters.industry])
 
+  useEffect(() => {
     fetchProducts()
-  }, [filters])
+  }, [fetchProducts])
 
   // Get unique categories and industries from products
   const categories = useMemo(() => [...new Set(products.map(p => p.category))], [products])
@@ -65,22 +92,22 @@ export default function CatalogPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" aria-hidden="true" />
       
       {/* Main content */}
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50 relative">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50 relative" role="navigation" aria-label="Main navigation">
+          <a href="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded-lg">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center" aria-hidden="true">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
           </a>
           
-          <div className="hidden md:flex items-center gap-6">
-            <a href="/catalog" className="text-zinc-100 text-sm font-medium">Catalog</a>
-            <a href="/rfq" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Request Quote</a>
+          <div className="hidden md:flex items-center gap-6" role="menubar">
+            <a href="/catalog" className="text-zinc-100 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Catalog</a>
+            <a href="/rfq" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Request Quote</a>
           </div>
           
           <div className="md:hidden">
@@ -105,7 +132,7 @@ export default function CatalogPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Filters Sidebar */}
-            <aside className="lg:w-72 flex-shrink-0">
+            <aside className="lg:w-72 flex-shrink-0" aria-label="Product filters">
               <AnimatedContent>
                 <LiquidCard glassIntensity="medium" className="sticky top-6">
                   <div className="p-6">
@@ -117,13 +144,16 @@ export default function CatalogPage() {
                         Search
                       </label>
                       <input
-                        type="text"
+                        type="search"
                         id="search"
+                        name="search"
                         value={filters.search}
                         onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                         placeholder="Search products..."
+                        aria-describedby="search-hint"
                         className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
                       />
+                      <span id="search-hint" className="sr-only">Type to search products by name or description</span>
                     </div>
 
                     {/* Category Filter */}
@@ -133,6 +163,7 @@ export default function CatalogPage() {
                       </label>
                       <select
                         id="category"
+                        name="category"
                         value={filters.category}
                         onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                         className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
@@ -151,6 +182,7 @@ export default function CatalogPage() {
                       </label>
                       <select
                         id="industry"
+                        name="industry"
                         value={filters.industry}
                         onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
                         className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
@@ -168,6 +200,7 @@ export default function CatalogPage() {
                       size="sm"
                       onClick={() => setFilters({ search: '', category: '', industry: '' })}
                       className="w-full"
+                      aria-label="Clear all filters"
                     >
                       Clear Filters
                     </SpringButton>
@@ -177,9 +210,15 @@ export default function CatalogPage() {
             </aside>
 
             {/* Product Grid */}
-            <main className="flex-1 pb-24 md:pb-0">
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <main id="main-content" className="flex-1 pb-24 md:pb-0" aria-label="Product list">
+              {!isOnline ? (
+                <ErrorState 
+                  title="You're offline"
+                  description="Please check your internet connection and try again."
+                  retry={fetchProducts}
+                />
+              ) : loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" aria-label="Loading products">
                   <CardSkeleton />
                   <CardSkeleton />
                   <CardSkeleton />
@@ -187,30 +226,39 @@ export default function CatalogPage() {
                   <CardSkeleton />
                   <CardSkeleton />
                 </div>
+              ) : isTimeout ? (
+                <TimeoutState 
+                  onRetry={fetchProducts}
+                  message="The product catalog is taking too long to load. Please try again."
+                />
               ) : error ? (
                 <ErrorState 
                   description={error}
-                  retry={() => window.location.reload()}
+                  retry={fetchProducts}
                 />
               ) : products.length === 0 ? (
-                <div className="py-12 text-center">
+                <div className="py-12 text-center" role="status">
                   <p className="text-zinc-500">No products found matching your criteria</p>
                 </div>
               ) : (
                 <>
-                  <div className="mb-6 text-sm text-zinc-500">
+                  <div className="mb-6 text-sm text-zinc-500" role="status" aria-live="polite">
                     Showing {products.length} product{products.length !== 1 ? 's' : ''}
                   </div>
-                  <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {products.map((product) => (
-                      <StaggerItem key={product.id}>
-                        <ProductCard 
-                          product={product} 
-                          onClick={() => setSelectedProduct(product)}
-                        />
-                      </StaggerItem>
-                    ))}
-                  </StaggerContainer>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" role="list">
+                    <StaggerContainer>
+                      {products.map((product) => (
+                        <StaggerItem key={product.id}>
+                          <li>
+                            <ProductCard 
+                              product={product} 
+                              onClick={() => setSelectedProduct(product)}
+                            />
+                          </li>
+                        </StaggerItem>
+                      ))}
+                    </StaggerContainer>
+                  </ul>
                 </>
               )}
             </main>
