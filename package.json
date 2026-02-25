@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@appletosolutions/reactbits": "^1.0.3",
+    "@pixi/react": "^8.0.5",
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -18,8 +19,11 @@
     "hono": "^4.12.2",
     "nanoid": "^5.0.0",
     "next": "16.1.6",
+    "ogl": "^1.0.11",
+    "pixi.js": "^8.16.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "simplex-noise": "^4.0.3",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
