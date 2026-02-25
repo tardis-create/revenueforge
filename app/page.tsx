@@ -8,7 +8,6 @@ import {
   FadeContent,
   Magnet,
   GlareHover,
-  TiltedCard,
   ClickSpark,
   CountUp
 } from '@appletosolutions/reactbits'
@@ -110,13 +109,13 @@ export default function Home() {
                 <div className="flex gap-8 pt-4">
                   <div>
                     <div className="text-2xl font-bold text-zinc-100">
-                      <CountUp end={2400} duration={2} />+
+                      <CountUp to={2400} duration={2} />+
                     </div>
                     <div className="text-sm text-zinc-500">Products</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-zinc-100">
-                      <CountUp end={150} duration={2} />+
+                      <CountUp to={150} duration={2} />+
                     </div>
                     <div className="text-sm text-zinc-500">Suppliers</div>
                   </div>
@@ -198,12 +197,7 @@ export default function Home() {
               {categories.map((cat, i) => (
                 <AnimatedContent key={cat.name} delay={0.1 * i}>
                   <Link href={`/catalog?category=${cat.name.toLowerCase()}`}>
-                    <TiltedCard
-                      containerHeight="auto"
-                      containerWidth="100%"
-                      imageHeight="0px"
-                      backgroundColour="transparent"
-                    >
+                    <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={200}>
                       <div className="p-5 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm hover:border-zinc-600/50 transition-all cursor-pointer group">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg ${cat.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -215,7 +209,7 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
-                    </TiltedCard>
+                    </GlareHover>
                   </Link>
                 </AnimatedContent>
               ))}

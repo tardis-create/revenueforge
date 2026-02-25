@@ -4,10 +4,15 @@ import { useState, useEffect } from 'react'
 import type { Product, ProductInput } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
-import { MagnetButton } from '@/app/components/ui/magnet-button'
-import { TextAnimate } from '@/app/components/ui/text-animate'
-import { LiquidGlass } from '@/app/components/ui/liquid-glass'
-import { SpringMotion, SpringScale } from '@/app/components/ui/spring-motion'
+import { 
+  BlurText, 
+  AnimatedContent, 
+  FadeContent,
+  Magnet,
+  ClickSpark,
+  GlareHover,
+  SpotlightCard
+} from '@appletosolutions/reactbits'
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -95,33 +100,33 @@ export default function AdminProductsPage() {
         {/* Header */}
         <header className="px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <SpringMotion>
+            <AnimatedContent>
               <div>
                 <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-                  <TextAnimate animation="blurIn">Product Management</TextAnimate>
+                  <BlurText text="Product Management" />
                 </h1>
                 <p className="text-zinc-400">
                   Add, edit, and manage product catalog
                 </p>
               </div>
-            </SpringMotion>
+            </AnimatedContent>
             
-            <SpringMotion delay={0.1}>
-              <MagnetButton
-                onClick={() => {
-                  setEditingProduct(null)
-                  setShowForm(true)
-                }}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500/30"
-              >
-                <span className="flex items-center gap-2">
+            <AnimatedContent delay={0.1}>
+              <ClickSpark sparkColor="#a855f7" sparkCount={8}>
+                <button
+                  onClick={() => {
+                    setEditingProduct(null)
+                    setShowForm(true)
+                  }}
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all flex items-center gap-2"
+                >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Add Product
-                </span>
-              </MagnetButton>
-            </SpringMotion>
+                </button>
+              </ClickSpark>
+            </AnimatedContent>
           </div>
         </header>
 
@@ -151,131 +156,135 @@ export default function AdminProductsPage() {
               <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : products.length === 0 ? (
-            <SpringScale>
-              <LiquidGlass className="py-16 text-center">
-                <svg className="mx-auto h-12 w-12 text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <h3 className="text-lg font-medium text-zinc-100 mb-2">No products</h3>
-                <p className="text-zinc-500 mb-6">Get started by creating a new product.</p>
-                <MagnetButton
-                  onClick={() => setShowForm(true)}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500/30"
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Product
-                  </span>
-                </MagnetButton>
-              </LiquidGlass>
-            </SpringScale>
+            <AnimatedContent>
+              <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={300}>
+                <div className="py-16 text-center p-8 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
+                  <svg className="mx-auto h-12 w-12 text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-zinc-100 mb-2">No products</h3>
+                  <p className="text-zinc-500 mb-6">Get started by creating a new product.</p>
+                  <ClickSpark sparkColor="#a855f7" sparkCount={8}>
+                    <button
+                      onClick={() => setShowForm(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all inline-flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Product
+                    </button>
+                  </ClickSpark>
+                </div>
+              </GlareHover>
+            </AnimatedContent>
           ) : (
-            <SpringScale>
-              <LiquidGlass className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-800">
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Product
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          SKU
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Category
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Industry
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Price Range
-                        </th>
-                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th scope="col" className="relative px-6 py-4">
-                          <span className="sr-only">Actions</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/50">
-                      {products.map((product) => (
-                        <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 flex-shrink-0">
-                                {product.image_url ? (
-                                  <img 
-                                    className="h-10 w-10 rounded-lg object-cover" 
-                                    src={product.image_url} 
-                                    alt={product.name}
-                                  />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-lg bg-zinc-800 flex items-center justify-center">
-                                    <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
+            <AnimatedContent>
+              <GlareHover glareColor="rgba(168, 85, 247, 0.1)" glareSize={500}>
+                <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-zinc-800">
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Product
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            SKU
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Industry
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Price Range
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th scope="col" className="relative px-6 py-4">
+                            <span className="sr-only">Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/50">
+                        {products.map((product) => (
+                          <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="h-10 w-10 flex-shrink-0">
+                                  {product.image_url ? (
+                                    <img 
+                                      className="h-10 w-10 rounded-lg object-cover" 
+                                      src={product.image_url} 
+                                      alt={product.name}
+                                    />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+                                      <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-zinc-100">
+                                    {product.name}
                                   </div>
-                                )}
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-zinc-100">
-                                  {product.name}
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-mono text-zinc-500">
-                              {product.sku}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                              {product.category}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                              {product.industry}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400">
-                            {product.price_range || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                              product.is_active 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                            }`}>
-                              {product.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <button
-                              onClick={() => handleEdit(product)}
-                              className="text-purple-400 hover:text-purple-300 mr-4 transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product.id)}
-                              className="text-red-400 hover:text-red-300 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-mono text-zinc-500">
+                                {product.sku}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                {product.category}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                {product.industry}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400">
+                              {product.price_range || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                product.is_active 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                              }`}>
+                                {product.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                              <button
+                                onClick={() => handleEdit(product)}
+                                className="text-purple-400 hover:text-purple-300 mr-4 transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(product.id)}
+                                className="text-red-400 hover:text-red-300 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </LiquidGlass>
-            </SpringScale>
+              </GlareHover>
+            </AnimatedContent>
           )}
         </main>
       </div>
@@ -368,7 +377,7 @@ function ProductForm({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel}></div>
 
         {/* Modal */}
-        <SpringScale>
+        <AnimatedContent>
           <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
             <form onSubmit={handleSubmit}>
               <div className="p-6">
@@ -567,24 +576,32 @@ function ProductForm({
 
               {/* Actions */}
               <div className="px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex justify-end gap-3">
-                <MagnetButton
-                  type="button"
-                  onClick={onCancel}
-                  className="px-6"
-                >
-                  Cancel
-                </MagnetButton>
-                <MagnetButton
-                  type="submit"
-                  disabled={loading}
-                  className={`px-6 ${loading ? 'opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500/30'}`}
-                >
-                  {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
-                </MagnetButton>
+                <Magnet padding={30} magnetStrength={2}>
+                  <button
+                    type="button"
+                    onClick={onCancel}
+                    className="px-6 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 font-medium hover:border-zinc-600 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </Magnet>
+                <ClickSpark sparkColor="#a855f7" sparkCount={8}>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                      loading 
+                        ? 'opacity-50 cursor-not-allowed bg-zinc-800 text-zinc-400' 
+                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 text-white hover:border-purple-400/50'
+                    }`}
+                  >
+                    {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
+                  </button>
+                </ClickSpark>
               </div>
             </form>
           </div>
-        </SpringScale>
+        </AnimatedContent>
       </div>
     </div>
   )

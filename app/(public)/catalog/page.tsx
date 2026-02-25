@@ -4,11 +4,15 @@ import { useState, useEffect, useMemo } from 'react'
 import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
-import { SpotlightCard } from '@/app/components/ui/spotlight-card'
-import { MagnetButton } from '@/app/components/ui/magnet-button'
-import { TextAnimate } from '@/app/components/ui/text-animate'
-import { LiquidGlass } from '@/app/components/ui/liquid-glass'
-import { SpringMotion, SpringScale } from '@/app/components/ui/spring-motion'
+import { 
+  SpotlightCard, 
+  BlurText, 
+  AnimatedContent, 
+  FadeContent,
+  Magnet,
+  ClickSpark,
+  GlareHover
+} from '@appletosolutions/reactbits'
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -78,14 +82,14 @@ export default function CatalogPage() {
         {/* Header */}
         <header className="px-6 lg:px-12 py-12 lg:py-16">
           <div className="max-w-7xl mx-auto">
-            <SpringMotion>
+            <AnimatedContent>
               <h1 className="text-4xl lg:text-5xl font-bold text-zinc-100 mb-4">
-                <TextAnimate animation="blurIn">Product Catalog</TextAnimate>
+                <BlurText text="Product Catalog" />
               </h1>
               <p className="text-lg text-zinc-400 max-w-2xl">
                 Browse our range of industrial products from verified suppliers
               </p>
-            </SpringMotion>
+            </AnimatedContent>
           </div>
         </header>
 
@@ -93,70 +97,74 @@ export default function CatalogPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Filters Sidebar */}
             <aside className="lg:w-72 flex-shrink-0">
-              <SpringMotion>
-                <LiquidGlass className="p-6 sticky top-6">
-                  <h2 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-6">Filters</h2>
+              <AnimatedContent>
+                <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={300}>
+                  <div className="p-6 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm sticky top-6">
+                    <h2 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-6">Filters</h2>
 
-                  {/* Search */}
-                  <div className="mb-6">
-                    <label htmlFor="search" className="block text-sm text-zinc-400 mb-2">
-                      Search
-                    </label>
-                    <input
-                      type="text"
-                      id="search"
-                      value={filters.search}
-                      onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                      placeholder="Search products..."
-                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
-                    />
+                    {/* Search */}
+                    <div className="mb-6">
+                      <label htmlFor="search" className="block text-sm text-zinc-400 mb-2">
+                        Search
+                      </label>
+                      <input
+                        type="text"
+                        id="search"
+                        value={filters.search}
+                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                        placeholder="Search products..."
+                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                      />
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="mb-6">
+                      <label htmlFor="category" className="block text-sm text-zinc-400 mb-2">
+                        Category
+                      </label>
+                      <select
+                        id="category"
+                        value={filters.category}
+                        onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                      >
+                        <option value="">All Categories</option>
+                        {CATEGORIES.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Industry Filter */}
+                    <div className="mb-6">
+                      <label htmlFor="industry" className="block text-sm text-zinc-400 mb-2">
+                        Industry
+                      </label>
+                      <select
+                        id="industry"
+                        value={filters.industry}
+                        onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                      >
+                        <option value="">All Industries</option>
+                        {INDUSTRIES.map(ind => (
+                          <option key={ind} value={ind}>{ind}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Clear Filters */}
+                    <ClickSpark sparkColor="#a855f7" sparkCount={6}>
+                      <button 
+                        onClick={() => setFilters({ search: '', category: '', industry: '' })}
+                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-300 text-sm font-medium hover:border-zinc-600 transition-all"
+                      >
+                        Clear Filters
+                      </button>
+                    </ClickSpark>
                   </div>
-
-                  {/* Category Filter */}
-                  <div className="mb-6">
-                    <label htmlFor="category" className="block text-sm text-zinc-400 mb-2">
-                      Category
-                    </label>
-                    <select
-                      id="category"
-                      value={filters.category}
-                      onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
-                    >
-                      <option value="">All Categories</option>
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Industry Filter */}
-                  <div className="mb-6">
-                    <label htmlFor="industry" className="block text-sm text-zinc-400 mb-2">
-                      Industry
-                    </label>
-                    <select
-                      id="industry"
-                      value={filters.industry}
-                      onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
-                    >
-                      <option value="">All Industries</option>
-                      {INDUSTRIES.map(ind => (
-                        <option key={ind} value={ind}>{ind}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Clear Filters */}
-                  <MagnetButton 
-                    onClick={() => setFilters({ search: '', category: '', industry: '' })}
-                    className="w-full text-sm py-2.5"
-                  >
-                    Clear Filters
-                  </MagnetButton>
-                </LiquidGlass>
-              </SpringMotion>
+                </GlareHover>
+              </AnimatedContent>
             </aside>
 
             {/* Product Grid */}
@@ -180,12 +188,12 @@ export default function CatalogPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                     {products.map((product, i) => (
-                      <SpringScale key={product.id} delay={0.05 * (i % 6)}>
+                      <AnimatedContent key={product.id} delay={0.05 * (i % 6)}>
                         <ProductCard 
                           product={product} 
                           onClick={() => setSelectedProduct(product)}
                         />
-                      </SpringScale>
+                      </AnimatedContent>
                     ))}
                   </div>
                 </>
@@ -209,11 +217,11 @@ export default function CatalogPage() {
 // Product Card Component with SpotlightCard
 function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
   return (
-    <SpotlightCard
-      onClick={onClick}
-      className="cursor-pointer group"
-      spotlightColor="rgba(168, 85, 247, 0.12)"
-    >
+    <div onClick={onClick} className="cursor-pointer group">
+      <SpotlightCard
+        className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl overflow-hidden"
+        spotlightColor="rgba(168, 85, 247, 0.15)"
+      >
       {/* Product Image */}
       <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden">
         {product.image_url ? (
@@ -267,6 +275,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
         )}
       </div>
     </SpotlightCard>
+    </div>
   )
 }
 
@@ -285,7 +294,7 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
 
         {/* Modal */}
-        <SpringScale>
+        <AnimatedContent>
           <div 
             className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -365,17 +374,21 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
               {/* Actions */}
               <div className="flex gap-3">
                 <a href="/rfq" className="flex-1">
-                  <MagnetButton className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500/30">
-                    Request Quote
-                  </MagnetButton>
+                  <ClickSpark sparkColor="#a855f7" sparkCount={8}>
+                    <button className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all">
+                      Request Quote
+                    </button>
+                  </ClickSpark>
                 </a>
-                <MagnetButton onClick={onClose} className="px-6">
-                  Close
-                </MagnetButton>
+                <Magnet padding={30} magnetStrength={2}>
+                  <button onClick={onClose} className="px-6 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 font-medium hover:border-zinc-600 transition-all">
+                    Close
+                  </button>
+                </Magnet>
               </div>
             </div>
           </div>
-        </SpringScale>
+        </AnimatedContent>
       </div>
     </div>
   )
