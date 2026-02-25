@@ -1,0 +1,3 @@
+module.exports=[23233,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(35999);a.n(d("[project]/workspace/revenueforge/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},24e3,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(35999);a.n(d("[project]/workspace/revenueforge/node_modules/next/dist/client/components/builtin/global-error.js"))},79402,a=>{"use strict";a.i(23233);var b=a.i(24e3);a.n(b)}];
+
+//# sourceMappingURL=53f04_next_dist_client_components_builtin_global-error_c32c7917.js.map
