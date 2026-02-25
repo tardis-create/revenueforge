@@ -401,7 +401,7 @@ export default function Home() {
 
                   {submitStatus === 'success' && (
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-                      Thank you! We'll be in touch within 24 hours.
+                      Thank you! We&rsquo;ll be in touch within 24 hours.
                     </div>
                   )}
 
