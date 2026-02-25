@@ -191,8 +191,8 @@ export default function Home() {
                 ))}
               </div>
               <p className="text-zinc-700 mb-6 leading-relaxed">
-                "RevenueForge helped us increase our ARR by 47% in just 6 months. The predictive analytics 
-                alone saved us countless hours of manual forecasting."
+                &ldquo;RevenueForge helped us increase our ARR by 47% in just 6 months. The predictive analytics 
+                alone saved us countless hours of manual forecasting.&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-zinc-200 rounded-full flex items-center justify-center text-zinc-600 font-semibold">
@@ -215,8 +215,8 @@ export default function Home() {
                 ))}
               </div>
               <p className="text-zinc-700 mb-6 leading-relaxed">
-                "The automation features cut our deal cycle time by 30%. Our sales team can now focus 
-                on closing deals instead of chasing paperwork."
+                &ldquo;The automation features cut our deal cycle time by 30%. Our sales team can now focus 
+                on closing deals instead of chasing paperwork.&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-zinc-200 rounded-full flex items-center justify-center text-zinc-600 font-semibold">
@@ -239,8 +239,8 @@ export default function Home() {
                 ))}
               </div>
               <p className="text-zinc-700 mb-6 leading-relaxed">
-                "Finally, a platform that brings our finance and sales teams together. RevenueForge 
-                gave us complete visibility into our revenue pipeline."
+                &ldquo;Finally, a platform that brings our finance and sales teams together. RevenueForge 
+                gave us complete visibility into our revenue pipeline.&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-zinc-200 rounded-full flex items-center justify-center text-zinc-600 font-semibold">
