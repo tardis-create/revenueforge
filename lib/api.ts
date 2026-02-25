@@ -13,3 +13,6 @@ export async function apiFetch(path: string, options?: RequestInit): Promise<Res
     },
   })
 }
+
+// Re-export notification utilities
+export { sendNotification, type NotificationPayload, type NotificationType, type NotificationResponse } from './notifications'
