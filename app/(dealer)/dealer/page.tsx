@@ -9,7 +9,7 @@ import {
   ClickSpark,
   GlareHover,
   CountUp
-} from '@appletosolutions/reactbits'
+} from '@/app/components'
 
 interface DashboardStats {
   totalOrders: number

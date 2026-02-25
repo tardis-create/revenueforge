@@ -9,7 +9,7 @@ import {
   Magnet,
   ClickSpark,
   GlareHover
-} from '@appletosolutions/reactbits';
+} from '@/app/components';
 
 interface FormData {
   companyName: string;

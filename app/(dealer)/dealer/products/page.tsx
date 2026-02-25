@@ -9,7 +9,7 @@ import {
   ClickSpark,
   GlareHover,
   SpotlightCard
-} from '@appletosolutions/reactbits'
+} from '@/app/components'
 
 interface Product {
   id: string

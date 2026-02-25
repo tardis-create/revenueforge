@@ -9,7 +9,7 @@ import {
   Magnet,
   ClickSpark,
   GlareHover
-} from '@appletosolutions/reactbits'
+} from '@/app/components'
 
 export default function DealerLoginPage() {
   const router = useRouter()

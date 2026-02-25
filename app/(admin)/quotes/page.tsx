@@ -8,7 +8,7 @@ import {
   Magnet,
   ClickSpark,
   GlareHover
-} from '@appletosolutions/reactbits'
+} from '@/app/components'
 
 interface Quote {
   id: string

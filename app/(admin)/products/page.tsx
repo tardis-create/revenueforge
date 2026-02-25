@@ -6,9 +6,7 @@ import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
 import { 
   BlurText, 
-  AnimatedContent
-} from '@appletosolutions/reactbits'
-import { 
+  AnimatedContent,
   SpringButton, 
   LiquidCard, 
   LoadingSkeleton, 

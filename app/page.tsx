@@ -9,9 +9,13 @@ import {
   Magnet,
   GlareHover,
   ClickSpark,
-  CountUp
-} from '@appletosolutions/reactbits'
-import { LiquidCard, SpringButton, HamburgerMenu, StaggerContainer, StaggerItem } from "./components"
+  CountUp,
+  LiquidCard, 
+  SpringButton, 
+  HamburgerMenu, 
+  StaggerContainer, 
+  StaggerItem 
+} from "./components"
 
 export default function Home() {
   return (
