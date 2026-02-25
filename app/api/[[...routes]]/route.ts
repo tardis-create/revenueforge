@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 
