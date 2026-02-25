@@ -5,4 +5,4 @@ pages_build_output_dir = ".vercel/output/static"
 [[d1_databases]]
 binding = "DB"
 database_name = "revenueforge-db"
-database_id = "placeholder-will-be-set-on-deployment"
+database_id = "da0624be-7f9c-4fc7-809a-c79c5641896b"
