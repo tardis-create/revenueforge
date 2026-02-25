@@ -26,12 +26,12 @@ export default function CatalogPage() {
         if (filters.industry) params.append('industry', filters.industry)
         
         const response = await fetch(`/api/products?${params.toString()}`)
-        const data = await response.json()
+        const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
         
-        if (data.success) {
+        if (data.success && data.data) {
           setProducts(data.data)
         } else {
-          setError(data.error)
+          setError(data.error || 'Failed to load products')
         }
       } catch (err) {
         setError('Failed to load products')

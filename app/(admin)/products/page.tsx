@@ -16,12 +16,12 @@ export default function AdminProductsPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/products')
-      const data = await response.json()
+      const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
       
-      if (data.success) {
+      if (data.success && data.data) {
         setProducts(data.data)
       } else {
-        setError(data.error)
+        setError(data.error || 'Failed to load products')
       }
     } catch (err) {
       setError('Failed to load products')
@@ -40,12 +40,12 @@ export default function AdminProductsPage() {
 
     try {
       const response = await fetch(`/api/products/${id}`, { method: 'DELETE' })
-      const data = await response.json()
+      const data = await response.json() as { success: boolean; error?: string }
       
       if (data.success) {
         setProducts(products.filter(p => p.id !== id))
       } else {
-        alert(data.error)
+        alert(data.error || 'Failed to delete')
       }
     } catch (err) {
       alert('Failed to delete product')
@@ -310,12 +310,12 @@ function ProductForm({
         body: JSON.stringify(formData),
       })
       
-      const data = await response.json()
+      const data = await response.json() as { success: boolean; error?: string }
       
       if (data.success) {
         onSuccess()
       } else {
-        setError(data.error)
+        setError(data.error || 'Failed to save')
       }
     } catch (err) {
       setError('Failed to save product')

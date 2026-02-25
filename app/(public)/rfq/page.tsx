@@ -125,9 +125,9 @@ export default function RFQForm() {
         setSubmitStatus("success");
         setFormData(initialFormData);
       } else {
-        const error = await response.json();
+        const errorData = await response.json() as { message?: string };
         setSubmitStatus("error");
-        setErrorMessage(error.message || "Failed to submit RFQ. Please try again.");
+        setErrorMessage(errorData.message || "Failed to submit RFQ. Please try again.");
       }
     } catch (error) {
       setSubmitStatus("error");
