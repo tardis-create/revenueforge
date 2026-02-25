@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { Product, ProductInput } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
+import { API_BASE_URL } from '@/lib/api'
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -15,7 +16,7 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/products')
+      const response = await fetch(`${API_BASE_URL}/api/products`)
       const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
       
       if (data.success && data.data) {
@@ -39,7 +40,7 @@ export default function AdminProductsPage() {
     if (!confirm('Are you sure you want to delete this product?')) return
 
     try {
-      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, { method: 'DELETE' })
       const data = await response.json() as { success: boolean; error?: string }
       
       if (data.success) {
@@ -301,7 +302,7 @@ function ProductForm({
     setError(null)
 
     try {
-      const url = product ? `/api/products/${product.id}` : '/api/products'
+      const url = product ? `${API_BASE_URL}/api/products/${product.id}` : `${API_BASE_URL}/api/products`
       const method = product ? 'PATCH' : 'POST'
       
       const response = await fetch(url, {

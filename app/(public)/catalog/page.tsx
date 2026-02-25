@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
+import { API_BASE_URL } from '@/lib/api'
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -25,7 +26,7 @@ export default function CatalogPage() {
         if (filters.category) params.append('category', filters.category)
         if (filters.industry) params.append('industry', filters.industry)
         
-        const response = await fetch(`/api/products?${params.toString()}`)
+        const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`)
         const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
         
         if (data.success && data.data) {

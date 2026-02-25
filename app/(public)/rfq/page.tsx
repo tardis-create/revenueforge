@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface FormData {
   companyName: string;
@@ -110,7 +111,7 @@ export default function RFQForm() {
     setSubmitStatus(null);
 
     try {
-      const response = await fetch("/api/rfq", {
+      const response = await fetch(`${API_BASE_URL}/api/rfq`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
