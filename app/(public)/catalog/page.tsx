@@ -5,14 +5,19 @@ import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
 import { 
-  SpotlightCard, 
   BlurText, 
-  AnimatedContent, 
-  FadeContent,
-  Magnet,
-  ClickSpark,
-  GlareHover
+  AnimatedContent
 } from '@appletosolutions/reactbits'
+import { 
+  SpringButton, 
+  LiquidCard, 
+  LoadingSkeleton,
+  CardSkeleton,
+  ErrorState,
+  HamburgerMenu,
+  StaggerContainer,
+  StaggerItem
+} from '@/app/components'
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -65,7 +70,7 @@ export default function CatalogPage() {
       {/* Main content */}
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
+        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50 relative">
           <a href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
@@ -73,9 +78,13 @@ export default function CatalogPage() {
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
           </a>
           
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             <a href="/catalog" className="text-zinc-100 text-sm font-medium">Catalog</a>
             <a href="/rfq" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Request Quote</a>
+          </div>
+          
+          <div className="md:hidden">
+            <HamburgerMenu />
           </div>
         </nav>
 
@@ -98,8 +107,8 @@ export default function CatalogPage() {
             {/* Filters Sidebar */}
             <aside className="lg:w-72 flex-shrink-0">
               <AnimatedContent>
-                <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={300}>
-                  <div className="p-6 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm sticky top-6">
+                <LiquidCard glassIntensity="medium" className="sticky top-6">
+                  <div className="p-6">
                     <h2 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-6">Filters</h2>
 
                     {/* Search */}
@@ -154,29 +163,35 @@ export default function CatalogPage() {
                     </div>
 
                     {/* Clear Filters */}
-                    <ClickSpark sparkColor="#a855f7" sparkCount={6}>
-                      <button 
-                        onClick={() => setFilters({ search: '', category: '', industry: '' })}
-                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-300 text-sm font-medium hover:border-zinc-600 transition-all"
-                      >
-                        Clear Filters
-                      </button>
-                    </ClickSpark>
+                    <SpringButton 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setFilters({ search: '', category: '', industry: '' })}
+                      className="w-full"
+                    >
+                      Clear Filters
+                    </SpringButton>
                   </div>
-                </GlareHover>
+                </LiquidCard>
               </AnimatedContent>
             </aside>
 
             {/* Product Grid */}
-            <main className="flex-1">
+            <main className="flex-1 pb-24 md:pb-0">
               {loading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
                 </div>
               ) : error ? (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg">
-                  {error}
-                </div>
+                <ErrorState 
+                  description={error}
+                  retry={() => window.location.reload()}
+                />
               ) : products.length === 0 ? (
                 <div className="py-12 text-center">
                   <p className="text-zinc-500">No products found matching your criteria</p>
@@ -186,16 +201,16 @@ export default function CatalogPage() {
                   <div className="mb-6 text-sm text-zinc-500">
                     Showing {products.length} product{products.length !== 1 ? 's' : ''}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {products.map((product, i) => (
-                      <AnimatedContent key={product.id} delay={0.05 * (i % 6)}>
+                  <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {products.map((product) => (
+                      <StaggerItem key={product.id}>
                         <ProductCard 
                           product={product} 
                           onClick={() => setSelectedProduct(product)}
                         />
-                      </AnimatedContent>
+                      </StaggerItem>
                     ))}
-                  </div>
+                  </StaggerContainer>
                 </>
               )}
             </main>
@@ -214,16 +229,17 @@ export default function CatalogPage() {
   )
 }
 
-// Product Card Component with SpotlightCard
+// Product Card Component with LiquidCard
 function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
   return (
     <div onClick={onClick} className="cursor-pointer group">
-      <SpotlightCard
-        className="bg-zinc-900/80 border border-zinc-800/50 rounded-xl overflow-hidden"
+      <LiquidCard 
         spotlightColor="rgba(168, 85, 247, 0.15)"
+        glassIntensity="medium"
+        className="overflow-hidden"
       >
       {/* Product Image */}
-      <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden">
+      <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden -mx-6 -mt-6 mb-0">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -233,7 +249,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
         ) : (
           <div className="w-full h-full flex items-center justify-center text-zinc-600">
             <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2" />
             </svg>
           </div>
         )}
@@ -245,7 +261,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
       </div>
 
       {/* Product Info */}
-      <div className="p-5">
+      <div className="pt-5">
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-semibold text-zinc-100 group-hover:text-purple-300 transition-colors line-clamp-1">
             {product.name}
@@ -274,7 +290,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
           </p>
         )}
       </div>
-    </SpotlightCard>
+    </LiquidCard>
     </div>
   )
 }
@@ -374,17 +390,13 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
               {/* Actions */}
               <div className="flex gap-3">
                 <a href="/rfq" className="flex-1">
-                  <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all">
-                      Request Quote
-                    </button>
-                  </ClickSpark>
+                  <SpringButton variant="primary" className="w-full">
+                    Request Quote
+                  </SpringButton>
                 </a>
-                <Magnet padding={30} magnetStrength={2}>
-                  <button onClick={onClose} className="px-6 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 font-medium hover:border-zinc-600 transition-all">
-                    Close
-                  </button>
-                </Magnet>
+                <SpringButton variant="secondary" onClick={onClose}>
+                  Close
+                </SpringButton>
               </div>
             </div>
           </div>

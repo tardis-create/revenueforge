@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { MobileNav } from "./components/MobileNav";
 
 export const metadata: Metadata = {
   title: "RevenueForge",
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-satoshi antialiased bg-zinc-950 text-zinc-100">
         {children}
+        <MobileNav />
       </body>
     </html>
   );

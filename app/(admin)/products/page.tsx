@@ -6,13 +6,17 @@ import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
 import { 
   BlurText, 
-  AnimatedContent, 
-  FadeContent,
-  Magnet,
-  ClickSpark,
-  GlareHover,
-  SpotlightCard
+  AnimatedContent
 } from '@appletosolutions/reactbits'
+import { 
+  SpringButton, 
+  LiquidCard, 
+  LoadingSkeleton, 
+  EmptyState, 
+  ErrorState,
+  HamburgerMenu,
+  CardSkeleton
+} from '@/app/components'
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -83,7 +87,7 @@ export default function AdminProductsPage() {
       {/* Main content */}
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
+        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50 relative">
           <a href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
@@ -91,9 +95,13 @@ export default function AdminProductsPage() {
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
           </a>
           
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             <a href="/catalog" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Catalog</a>
             <a href="/admin/products" className="text-zinc-100 text-sm font-medium">Admin</a>
+          </div>
+          
+          <div className="md:hidden">
+            <HamburgerMenu />
           </div>
         </nav>
 
@@ -112,25 +120,24 @@ export default function AdminProductsPage() {
             </AnimatedContent>
             
             <AnimatedContent delay={0.1}>
-              <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                <button
-                  onClick={() => {
-                    setEditingProduct(null)
-                    setShowForm(true)
-                  }}
-                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Product
-                </button>
-              </ClickSpark>
+              <SpringButton
+                variant="primary"
+                onClick={() => {
+                  setEditingProduct(null)
+                  setShowForm(true)
+                }}
+                className="flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Product
+              </SpringButton>
             </AnimatedContent>
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-12">
+        <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-12 pb-24 md:pb-12">
           {/* Form Modal */}
           {showForm && (
             <ProductForm 
@@ -145,45 +152,37 @@ export default function AdminProductsPage() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg mb-6">
-              {error}
-            </div>
+            <ErrorState 
+              description={error}
+              retry={fetchProducts}
+            />
           )}
 
           {/* Loading State */}
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="space-y-4">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
             </div>
           ) : products.length === 0 ? (
-            <AnimatedContent>
-              <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={300}>
-                <div className="py-16 text-center p-8 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
-                  <svg className="mx-auto h-12 w-12 text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-zinc-100 mb-2">No products</h3>
-                  <p className="text-zinc-500 mb-6">Get started by creating a new product.</p>
-                  <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                    <button
-                      onClick={() => setShowForm(true)}
-                      className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all inline-flex items-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Product
-                    </button>
-                  </ClickSpark>
-                </div>
-              </GlareHover>
-            </AnimatedContent>
+            <EmptyState
+              icon={
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              }
+              title="No products yet"
+              description="Get started by creating your first product in the catalog."
+              action={{
+                label: "Add Product",
+                onClick: () => setShowForm(true)
+              }}
+            />
           ) : (
-            <AnimatedContent>
-              <GlareHover glareColor="rgba(168, 85, 247, 0.1)" glareSize={500}>
-                <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
+            <LiquidCard glassIntensity="low">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
                       <thead>
                         <tr className="border-b border-zinc-800">
                           <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
@@ -282,9 +281,7 @@ export default function AdminProductsPage() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              </GlareHover>
-            </AnimatedContent>
+            </LiquidCard>
           )}
         </main>
       </div>
@@ -576,28 +573,21 @@ function ProductForm({
 
               {/* Actions */}
               <div className="px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex justify-end gap-3">
-                <Magnet padding={30} magnetStrength={2}>
-                  <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-6 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 font-medium hover:border-zinc-600 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </Magnet>
-                <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                      loading 
-                        ? 'opacity-50 cursor-not-allowed bg-zinc-800 text-zinc-400' 
-                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 text-white hover:border-purple-400/50'
-                    }`}
-                  >
-                    {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
-                  </button>
-                </ClickSpark>
+                <SpringButton
+                  variant="secondary"
+                  type="button"
+                  onClick={onCancel}
+                >
+                  Cancel
+                </SpringButton>
+                <SpringButton
+                  variant="primary"
+                  type="submit"
+                  disabled={loading}
+                  className={loading ? 'opacity-50 cursor-not-allowed' : ''}
+                >
+                  {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
+                </SpringButton>
               </div>
             </form>
           </div>
