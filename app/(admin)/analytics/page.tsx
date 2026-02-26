@@ -78,26 +78,8 @@ export default function AnalyticsPage() {
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
       
-      {/* Main content */}
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">R</span>
-            </div>
-            <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
-          
-          <div className="flex items-center gap-6">
-            <a href="/admin/products" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Products</a>
-            <a href="/admin/quotes" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Quotes</a>
-            <a href="/admin/analytics" className="text-zinc-100 text-sm font-medium">Analytics</a>
-          </div>
-        </nav>
-
-        {/* Header */}
-        <header className="px-6 lg:px-12 py-8 lg:py-12">
+      {/* Header */}
+      <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <AnimatedContent>
               <div>
@@ -303,7 +285,6 @@ export default function AnalyticsPage() {
             </AnimatedContent>
           </div>
         </main>
-      </div>
     </div>
   )
 }

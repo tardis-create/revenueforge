@@ -120,41 +120,23 @@ export default function NotificationsPage() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
-      
+
       {/* Radial glow */}
       <div className="fixed top-1/3 right-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
       
-      {/* Main content */}
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">R</span>
+      {/* Header */}
+      <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <AnimatedContent>
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
+                <BlurText text="Notification Automation" />
+              </h1>
+              <p className="text-zinc-400">
+                Configure email and WhatsApp triggers for automated notifications
+              </p>
             </div>
-            <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
-          
-          <div className="flex items-center gap-6">
-            <a href="/admin/products" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Products</a>
-            <a href="/admin/quotes" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Quotes</a>
-            <a href="/admin/notifications" className="text-zinc-100 text-sm font-medium">Notifications</a>
-          </div>
-        </nav>
-
-        {/* Header */}
-        <header className="px-6 lg:px-12 py-8 lg:py-12">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <AnimatedContent>
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-                  <BlurText text="Notification Automation" />
-                </h1>
-                <p className="text-zinc-400">
-                  Configure email and WhatsApp triggers for automated notifications
-                </p>
-              </div>
-            </AnimatedContent>
+          </AnimatedContent>
             
             <AnimatedContent delay={0.1}>
               <ClickSpark sparkColor="#a855f7" sparkCount={8}>
@@ -342,7 +324,6 @@ export default function NotificationsPage() {
             }}
           />
         )}
-      </div>
     </div>
   )
 }
