@@ -6,7 +6,6 @@ export default function NotFound() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
-      
       {/* Decorative elements */}
       <div className="fixed top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px] pointer-events-none" />
