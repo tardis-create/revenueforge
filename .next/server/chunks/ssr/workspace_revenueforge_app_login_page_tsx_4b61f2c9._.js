@@ -1,0 +1,3 @@
+module.exports=[36330,a=>{"use strict";var b=a.i(53127),c=a.i(58852),d=a.i(73719);function e(){let a=(0,d.useRouter)();return(0,c.useEffect)(()=>{a.replace("/admin/login")},[a]),(0,b.jsx)("div",{className:"min-h-screen bg-zinc-950 flex items-center justify-center",children:(0,b.jsx)("p",{className:"text-zinc-400",children:"Redirecting to login..."})})}a.s(["default",()=>e])}];
+
+//# sourceMappingURL=workspace_revenueforge_app_login_page_tsx_4b61f2c9._.js.map
