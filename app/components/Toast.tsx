@@ -14,6 +14,10 @@ interface ToastContextType {
   toasts: Toast[]
   addToast: (message: string, type?: ToastType) => void
   removeToast: (id: string) => void
+  success: (message: string, description?: string) => void
+  error: (message: string, description?: string) => void
+  info: (message: string, description?: string) => void
+  warning: (message: string, description?: string) => void
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
@@ -33,8 +37,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
+  const formatMessage = useCallback((message: string, description?: string) => {
+    return description ? `${message}: ${description}` : message
+  }, [])
+
+  const success = useCallback((message: string, description?: string) => addToast(formatMessage(message, description), 'success'), [addToast, formatMessage])
+  const error = useCallback((message: string, description?: string) => addToast(formatMessage(message, description), 'error'), [addToast, formatMessage])
+  const info = useCallback((message: string, description?: string) => addToast(formatMessage(message, description), 'info'), [addToast, formatMessage])
+  const warning = useCallback((message: string, description?: string) => addToast(formatMessage(message, description), 'warning'), [addToast, formatMessage])
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, info, warning }}>
       {children}
     </ToastContext.Provider>
   )
@@ -43,7 +56,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const context = useContext(ToastContext)
   if (!context) {
-    throw new Error('useToast must be used within ToastProvider')
+    const noop = () => {}
+    return {
+      toasts: [],
+      addToast: noop,
+      removeToast: noop,
+      success: noop,
+      error: noop,
+      info: noop,
+      warning: noop,
+    }
   }
   return context
 }

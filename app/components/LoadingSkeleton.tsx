@@ -74,3 +74,25 @@ export function TableRowSkeleton({ columns = 4 }: { columns?: number }) {
     </tr>
   )
 }
+
+export function DataTableSkeleton({ rows = 5, columns = 4 }: { rows?: number; columns?: number; showStats?: number }) {
+  return (
+    <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <tbody>
+            {Array.from({ length: rows }).map((_, r) => (
+              <tr key={r} className="border-b border-zinc-800/50">
+                {Array.from({ length: columns }).map((__, c) => (
+                  <td key={c} className="p-4">
+                    <LoadingSkeleton variant="text" className="h-4" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
