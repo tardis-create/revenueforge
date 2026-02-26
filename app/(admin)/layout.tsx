@@ -277,89 +277,89 @@ export default function AdminLayout({
     <ProtectedRoute>
       <ToastProvider>
         <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      {/* Background effects */}
-      <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
+          {/* Background effects */}
+          <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800/50">
-        <div className="flex items-center justify-between px-4 lg:px-6 h-16">
-          {/* Left: Logo + Hamburger */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-zinc-400 hover:text-zinc-100 transition-colors"
-              aria-label="Open menu"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            
-            <Link href="/admin" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <div className="hidden sm:block">
-                <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-                <span className="text-zinc-500 mx-2">•</span>
-                <span className="text-zinc-400 text-sm">Admin</span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Right: User Menu */}
-          <UserMenu />
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 border-r border-zinc-800/50 min-h-[calc(100vh-4rem)] sticky top-16 bg-zinc-950/50 backdrop-blur-sm">
-          <nav className="p-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || 
-                (item.href !== '/admin' && pathname.startsWith(item.href));
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 border border-purple-500/20'
-                      : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100'
-                  }`}
+          {/* Top Header */}
+          <header className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800/50">
+            <div className="flex items-center justify-between px-4 lg:px-6 h-16">
+              {/* Left: Logo + Hamburger */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden p-2 text-zinc-400 hover:text-zinc-100 transition-colors"
+                  aria-label="Open menu"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                  <span className="font-medium">{item.label}</span>
-                  {isActive && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400" />
-                  )}
+                </button>
+                
+                <Link href="/admin" className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">R</span>
+                  </div>
+                  <div className="hidden sm:block">
+                    <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
+                    <span className="text-zinc-500 mx-2">•</span>
+                    <span className="text-zinc-400 text-sm">Admin</span>
+                  </div>
                 </Link>
-              );
-            })}
-          </nav>
-        </aside>
+              </div>
 
-        {/* Mobile Sidebar */}
-        <MobileSidebar 
-          isOpen={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)}
-          pathname={pathname}
-        />
+              {/* Right: User Menu */}
+              <UserMenu />
+            </div>
+          </header>
 
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8 min-h-[calc(100vh-4rem)]">
-          <div className="max-w-7xl mx-auto">
-            <Breadcrumbs />
-            {children}
+          <div className="flex">
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:block w-64 border-r border-zinc-800/50 min-h-[calc(100vh-4rem)] sticky top-16 bg-zinc-950/50 backdrop-blur-sm">
+              <nav className="p-4 space-y-1">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || 
+                    (item.href !== '/admin' && pathname.startsWith(item.href));
+                  
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-purple-300 border border-purple-500/20'
+                          : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100'
+                      }`}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      </svg>
+                      <span className="font-medium">{item.label}</span>
+                      {isActive && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </aside>
+
+            {/* Mobile Sidebar */}
+            <MobileSidebar 
+              isOpen={sidebarOpen} 
+              onClose={() => setSidebarOpen(false)}
+              pathname={pathname}
+            />
+
+            {/* Main Content */}
+            <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8 min-h-[calc(100vh-4rem)]">
+              <div className="max-w-7xl mx-auto">
+                <Breadcrumbs />
+                {children}
+              </div>
+            </main>
           </div>
-        </main>
-      </div>
-      </div>
+        </div>
       </ToastProvider>
     </ProtectedRoute>
   );
