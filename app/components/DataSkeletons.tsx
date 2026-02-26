@@ -1,4 +1,4 @@
-export function DataTableSkeleton({ rows = 5 }: { rows?: number }) {
+export function DataTableSkeleton({ rows = 5 }: { rows?: number; columns?: number; showStats?: number }) {
   return (
     <div className="animate-pulse">
       <div className="space-y-3">
