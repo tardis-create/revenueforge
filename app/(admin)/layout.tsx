@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ToastProvider } from '@/app/components';
+import { ToastProvider, ProtectedRoute } from '@/app/components';
 import { useAuth } from '@/lib/auth-context';
-import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 
 // Sidebar navigation items
 const navItems = [
@@ -277,15 +276,15 @@ export default function AdminLayout({
     <ProtectedRoute>
       <ToastProvider>
         <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      {/* Background effects */}
-      <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
+          {/* Background effects */}
+          <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800/50">
-        <div className="flex items-center justify-between px-4 lg:px-6 h-16">
-          {/* Left: Logo + Hamburger */}
-          <div className="flex items-center gap-4">
+          {/* Top Header */}
+          <header className="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800/50">
+            <div className="flex items-center justify-between px-4 lg:px-6 h-16">
+              {/* Left: Logo + Hamburger */}
+              <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 text-zinc-400 hover:text-zinc-100 transition-colors"
@@ -360,7 +359,7 @@ export default function AdminLayout({
         </main>
       </div>
       </div>
-      </ToastProvider>
-    </ProtectedRoute>
+    </ToastProvider>
+  </ProtectedRoute>
   );
 }
