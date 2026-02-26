@@ -20,6 +20,8 @@ export {
   FormSection,
   FormActions
 } from "./FormError"
+export { ToastProvider, useToast } from "./Toast"
+export type { Toast, ToastType } from "./Toast"
 
 // React Bits replacements
 export { BlurText } from "./BlurText"
