@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { 
@@ -157,16 +158,16 @@ export default function RFQForm() {
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
+          </Link>
           
           <div className="flex items-center gap-6">
-            <a href="/catalog" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Catalog</a>
-            <a href="/rfq" className="text-zinc-100 text-sm font-medium">Request Quote</a>
+            <Link href="/catalog" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Catalog</Link>
+            <Link href="/rfq" className="text-zinc-100 text-sm font-medium">Request Quote</Link>
           </div>
         </nav>
 

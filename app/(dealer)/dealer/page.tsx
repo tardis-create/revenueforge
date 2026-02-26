@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 
 import { useEffect, useState } from 'react'
 import { 
@@ -67,18 +68,18 @@ export default function DealerDashboard() {
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
+          </Link>
           
           <div className="flex items-center gap-6">
-            <a href="/dealer" className="text-zinc-100 text-sm font-medium">Dashboard</a>
-            <a href="/dealer/products" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Products</a>
-            <a href="/dealer/orders" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Orders</a>
-            <a href="/dealer/commissions" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Commissions</a>
+            <Link href="/dealer" className="text-zinc-100 text-sm font-medium">Dashboard</Link>
+            <Link href="/dealer/products" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Products</Link>
+            <Link href="/dealer/orders" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Orders</Link>
+            <Link href="/dealer/commissions" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Commissions</Link>
           </div>
         </nav>
 
@@ -90,7 +91,7 @@ export default function DealerDashboard() {
                 <BlurText text="Dealer Dashboard" />
               </h1>
               <p className="text-zinc-400">
-                Welcome back! Here's your performance overview.
+                Welcome back! Here{"'"}s your performance overview.
               </p>
             </div>
           </AnimatedContent>
@@ -139,9 +140,9 @@ export default function DealerDashboard() {
                     <div className="p-6 border-b border-zinc-800">
                       <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-zinc-100">Recent Orders</h2>
-                        <a href="/dealer/orders" className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
+                        <Link href="/dealer/orders" className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
                           View all
-                        </a>
+                        </Link>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -194,8 +195,7 @@ export default function DealerDashboard() {
                   <div className="p-6 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
                     <h2 className="text-lg font-semibold text-zinc-100 mb-4">Quick Actions</h2>
                     <div className="space-y-3">
-                      <a
-                        href="/dealer/products"
+                      <Link href="/dealer/products"
                         className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-800/30 transition-all"
                       >
                         <div className="w-10 h-10 rounded-lg bg-zinc-800/50 flex items-center justify-center">
@@ -207,9 +207,8 @@ export default function DealerDashboard() {
                           <div className="text-sm font-medium text-zinc-100">Browse Products</div>
                           <div className="text-xs text-zinc-500">{stats.activeProducts} products available</div>
                         </div>
-                      </a>
-                      <a
-                        href="/dealer/orders"
+                      </Link>
+                      <Link href="/dealer/orders"
                         className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-800/30 transition-all"
                       >
                         <div className="w-10 h-10 rounded-lg bg-zinc-800/50 flex items-center justify-center">
@@ -221,9 +220,8 @@ export default function DealerDashboard() {
                           <div className="text-sm font-medium text-zinc-100">View Orders</div>
                           <div className="text-xs text-zinc-500">{stats.pendingOrders} pending orders</div>
                         </div>
-                      </a>
-                      <a
-                        href="/dealer/commissions"
+                      </Link>
+                      <Link href="/dealer/commissions"
                         className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-800/30 transition-all"
                       >
                         <div className="w-10 h-10 rounded-lg bg-zinc-800/50 flex items-center justify-center">
@@ -235,7 +233,7 @@ export default function DealerDashboard() {
                           <div className="text-sm font-medium text-zinc-100">Track Commissions</div>
                           <div className="text-xs text-zinc-500">${stats.totalCommission.toLocaleString()} earned</div>
                         </div>
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </GlareHover>
