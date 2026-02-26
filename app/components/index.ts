@@ -12,6 +12,7 @@ export {
   TimeoutState 
 } from "./NetworkStatus"
 export { ToastProvider, useToast, type Toast, type ToastType } from "./Toast"
+export { ProtectedRoute } from "./ProtectedRoute"
 export { ApiError, ErrorBoundaryFallback } from "./ApiError"
 export { 
   FormError, 
@@ -40,3 +41,4 @@ export { GlareHover } from "./GlareHover"
 export { SpotlightCard } from "./SpotlightCard"
 export { Magnet } from "./Magnet"
 export { ClickSpark } from "./ClickSpark"
+export { ProtectedRoute } from "./ProtectedRoute"
