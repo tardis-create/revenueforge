@@ -2,6 +2,7 @@
   "version": 1,
   "functions": {
     "/api/[[...routes]]": {},
-    "/api/health": {}
+    "/api/health": {},
+    "/catalog/[id]": {}
   }
 }
