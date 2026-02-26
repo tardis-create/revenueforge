@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import type { Product, ProductFilters } from '@/lib/types'
 import { CATEGORIES, INDUSTRIES } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
@@ -13,6 +14,7 @@ import {
   LoadingSkeleton,
   CardSkeleton,
   ErrorState,
+  EmptyState,
   HamburgerMenu,
   StaggerContainer,
   StaggerItem,
@@ -26,7 +28,6 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isTimeout, setIsTimeout] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [filters, setFilters] = useState<ProductFilters>({
     search: '',
     category: '',
@@ -82,10 +83,6 @@ export default function CatalogPage() {
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
-
-  // Get unique categories and industries from products
-  const categories = useMemo(() => [...new Set(products.map(p => p.category))], [products])
-  const industries = useMemo(() => [...new Set(products.map(p => p.industry))], [products])
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -235,23 +232,24 @@ export default function CatalogPage() {
                   retry={fetchProducts}
                 />
               ) : products.length === 0 ? (
-                <div className="py-12 text-center" role="status">
-                  <p className="text-zinc-500">No products found matching your criteria</p>
-                </div>
+                <NoResultsState 
+                  hasFilters={!!(filters.search || filters.category || filters.industry)}
+                  onClearFilters={() => setFilters({ search: '', category: '', industry: '' })}
+                />
               ) : (
                 <>
                   <div className="mb-6 text-sm text-zinc-500" role="status" aria-live="polite">
                     Showing {products.length} product{products.length !== 1 ? 's' : ''}
+                    {debouncedSearch && ` for "${debouncedSearch}"`}
+                    {filters.category && ` in ${filters.category}`}
+                    {filters.industry && ` for ${filters.industry}`}
                   </div>
                   <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" role="list">
                     <StaggerContainer>
                       {products.map((product) => (
                         <StaggerItem key={product.id}>
                           <li>
-                            <ProductCard 
-                              product={product} 
-                              onClick={() => setSelectedProduct(product)}
-                            />
+                            <ProductCard product={product} />
                           </li>
                         </StaggerItem>
                       ))}
@@ -262,192 +260,93 @@ export default function CatalogPage() {
             </main>
           </div>
         </div>
-
-        {/* Product Detail Modal */}
-        {selectedProduct && (
-          <ProductModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
-          />
-        )}
       </div>
     </div>
+  )
+}
+
+// No Results State Component
+function NoResultsState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
+  return (
+    <EmptyState
+      icon={
+        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      }
+      title="No products found"
+      description={
+        hasFilters
+          ? "Try adjusting your search or filters to find what you're looking for."
+          : "There are no products available at the moment. Please check back later."
+      }
+      action={hasFilters ? { label: "Clear Filters", onClick: onClearFilters } : undefined}
+    />
   )
 }
 
 // Product Card Component with LiquidCard
-function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
+function ProductCard({ product }: { product: Product }) {
   return (
-    <div onClick={onClick} className="cursor-pointer group">
+    <Link href={`/catalog/${product.id}`} className="block group">
       <LiquidCard 
         spotlightColor="rgba(168, 85, 247, 0.15)"
         glassIntensity="medium"
-        className="overflow-hidden"
+        className="overflow-hidden h-full"
       >
-      {/* Product Image */}
-      <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden -mx-6 -mt-6 mb-0">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-600">
-            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2" />
-            </svg>
-          </div>
-        )}
-        {!product.is_active && (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-zinc-700/90 text-zinc-300 text-xs rounded-md backdrop-blur-sm">
-            Inactive
-          </div>
-        )}
-      </div>
-
-      {/* Product Info */}
-      <div className="pt-5">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-semibold text-zinc-100 group-hover:text-purple-300 transition-colors line-clamp-1">
-            {product.name}
-          </h3>
-          <span className="text-xs font-mono text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded flex-shrink-0">
-            {product.sku}
-          </span>
-        </div>
-        
-        <p className="text-sm text-zinc-500 line-clamp-2 mb-4">
-          {product.description || 'No description available'}
-        </p>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            {product.category}
-          </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-            {product.industry}
-          </span>
-        </div>
-
-        {product.price_range && (
-          <p className="text-sm font-semibold text-zinc-100">
-            {product.price_range}
-          </p>
-        )}
-      </div>
-    </LiquidCard>
-    </div>
-  )
-}
-
-// Product Detail Modal
-function ProductModal({ product, onClose }: { product: Product; onClose: () => void }) {
-  return (
-    <div 
-      className="fixed inset-0 z-50 overflow-y-auto" 
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <div className="flex items-center justify-center min-h-screen px-4 py-8">
-        {/* Backdrop */}
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
-
-        {/* Modal */}
-        <AnimatedContent>
-          <div 
-            className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-300 bg-zinc-800/50 rounded-lg transition-colors z-10"
-              aria-label="Close"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        {/* Product Image */}
+        <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden -mx-6 -mt-6 mb-0">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-zinc-600">
+              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2" />
               </svg>
-            </button>
-
-            {/* Product Image */}
-            {product.image_url && (
-              <div className="aspect-video w-full overflow-hidden rounded-t-2xl">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Content */}
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <h2 id="modal-title" className="text-2xl font-bold text-zinc-100">
-                    {product.name}
-                  </h2>
-                  <p className="text-sm font-mono text-zinc-500 mt-1">SKU: {product.sku}</p>
-                </div>
-                {product.price_range && (
-                  <span className="text-xl font-bold text-zinc-100">
-                    {product.price_range}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  {product.category}
-                </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  {product.industry}
-                </span>
-              </div>
-
-              <p className="text-zinc-400 mb-6">
-                {product.description || 'No description available'}
-              </p>
-
-              {/* Technical Specs */}
-              {product.technical_specs && Object.keys(product.technical_specs).length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-3">
-                    Technical Specifications
-                  </h3>
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {Object.entries(product.technical_specs).map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center bg-zinc-800/50 px-3 py-2 rounded-lg">
-                        <dt className="text-sm text-zinc-500 capitalize">
-                          {key.replace(/_/g, ' ')}
-                        </dt>
-                        <dd className="text-sm font-medium text-zinc-100">
-                          {value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                <a href="/rfq" className="flex-1">
-                  <SpringButton variant="primary" className="w-full">
-                    Request Quote
-                  </SpringButton>
-                </a>
-                <SpringButton variant="secondary" onClick={onClose}>
-                  Close
-                </SpringButton>
-              </div>
             </div>
+          )}
+          {!product.is_active && (
+            <div className="absolute top-3 right-3 px-2 py-1 bg-zinc-700/90 text-zinc-300 text-xs rounded-md backdrop-blur-sm">
+              Inactive
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="pt-5">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-zinc-100 group-hover:text-purple-300 transition-colors line-clamp-1">
+              {product.name}
+            </h3>
+            <span className="text-xs font-mono text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded flex-shrink-0">
+              {product.sku}
+            </span>
           </div>
-        </AnimatedContent>
-      </div>
-    </div>
+          
+          <p className="text-sm text-zinc-500 line-clamp-2 mb-4">
+            {product.description || 'No description available'}
+          </p>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              {product.category}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              {product.industry}
+            </span>
+          </div>
+
+          {product.price_range && (
+            <p className="text-sm font-semibold text-zinc-100">
+              {product.price_range}
+            </p>
+          )}
+        </div>
+      </LiquidCard>
+    </Link>
   )
 }
