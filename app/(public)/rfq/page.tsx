@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { 
   BlurText, 
   AnimatedContent, 
   FadeContent,
+  Magnet,
   ClickSpark,
   GlareHover
 } from '@/app/components';
@@ -48,44 +47,11 @@ const initialFormData: FormData = {
 };
 
 export default function RFQForm() {
-  const searchParams = useSearchParams();
-  const productId = searchParams.get('product');
-  
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [loadingProduct, setLoadingProduct] = useState(false);
-
-  // Fetch product details and pre-fill form
-  useEffect(() => {
-    async function fetchProductDetails() {
-      if (!productId) return;
-      
-      try {
-        setLoadingProduct(true);
-        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
-        
-        if (response.ok) {
-          const data = await response.json() as { success: boolean; data?: { name: string; sku: string; category: string; description?: string } };
-          if (data.success && data.data) {
-            const product = data.data;
-            setFormData(prev => ({
-              ...prev,
-              productRequirements: `${product.name} (SKU: ${product.sku})\nCategory: ${product.category}${product.description ? `\n\n${product.description}` : ''}`
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch product details:', error);
-      } finally {
-        setLoadingProduct(false);
-      }
-    }
-    
-    fetchProductDetails();
-  }, [productId]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -191,16 +157,16 @@ export default function RFQForm() {
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <Link href="/" className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </Link>
+          </a>
           
           <div className="flex items-center gap-6">
-            <Link href="/catalog" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Catalog</Link>
-            <Link href="/rfq" className="text-zinc-100 text-sm font-medium">Request Quote</Link>
+            <a href="/catalog" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Catalog</a>
+            <a href="/rfq" className="text-zinc-100 text-sm font-medium">Request Quote</a>
           </div>
         </nav>
 
@@ -368,7 +334,6 @@ export default function RFQForm() {
                       <div className="mb-4">
                         <label htmlFor="productRequirements" className="block text-sm text-zinc-400 mb-2">
                           Describe Your Requirements <span className="text-red-400">*</span>
-                          {loadingProduct && <span className="ml-2 text-purple-400">(Loading product details...)</span>}
                         </label>
                         <textarea
                           id="productRequirements"
@@ -376,12 +341,11 @@ export default function RFQForm() {
                           value={formData.productRequirements}
                           onChange={handleChange}
                           rows={4}
-                          disabled={loadingProduct}
                           className={`w-full px-4 py-3 rounded-lg bg-zinc-800/50 border ${
                             errors.productRequirements
                               ? "border-red-500/50"
                               : "border-zinc-700/50 focus:border-purple-500/50"
-                          } text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500/20 transition-colors resize-none disabled:opacity-50`}
+                          } text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500/20 transition-colors resize-none`}
                           placeholder="Please describe the products or services you're looking for, including specifications, materials, certifications, etc."
                         />
                         {errors.productRequirements && (
