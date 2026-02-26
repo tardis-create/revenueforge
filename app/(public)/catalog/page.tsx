@@ -11,7 +11,6 @@ import {
   AnimatedContent,
   SpringButton, 
   LiquidCard, 
-  LoadingSkeleton,
   CardSkeleton,
   ErrorState,
   EmptyState,
@@ -93,16 +92,16 @@ export default function CatalogPage() {
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50 relative" role="navigation" aria-label="Main navigation">
-          <a href="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded-lg">
+          <Link href="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded-lg">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center" aria-hidden="true">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
+          </Link>
           
           <div className="hidden md:flex items-center gap-6" role="menubar">
-            <a href="/catalog" className="text-zinc-100 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Catalog</a>
-            <a href="/rfq" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Request Quote</a>
+            <Link href="/catalog" className="text-zinc-100 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Catalog</Link>
+            <Link href="/rfq" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1" role="menuitem">Request Quote</Link>
           </div>
           
           <div className="md:hidden">
@@ -123,6 +122,37 @@ export default function CatalogPage() {
             </AnimatedContent>
           </div>
         </header>
+
+        {/* Category Filter Pills */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 pb-8">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Category filters">
+            <button
+              onClick={() => setFilters({ ...filters, category: '' })}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                !filters.category
+                  ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                  : 'bg-zinc-800/50 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50'
+              }`}
+              aria-pressed={!filters.category}
+            >
+              All
+            </button>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilters({ ...filters, category: filters.category === cat ? '' : cat })}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  filters.category === cat
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'bg-zinc-800/50 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50'
+                }`}
+                aria-pressed={filters.category === cat}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
           <div className="flex flex-col lg:flex-row gap-8">
