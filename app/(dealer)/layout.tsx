@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 export default function DealerLayout({
   children,
@@ -10,20 +11,26 @@ export default function DealerLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading: authLoading, user, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const auth = localStorage.getItem('dealerAuth');
-    if (!auth && pathname !== '/dealer/login') {
-      router.push('/dealer/login');
-    } else if (auth) {
-      setIsAuthenticated(true);
+    // Wait for auth to initialize
+    if (!authLoading) {
+      // Check if user is a dealer or has dealer access
+      const isDealer = user?.role === 'dealer' || user?.role === 'admin';
+      
+      if (!isAuthenticated && pathname !== '/dealer/login') {
+        router.push('/dealer/login');
+      } else if (isAuthenticated && !isDealer && pathname !== '/dealer/login') {
+        // Non-dealer users should not access dealer pages
+        router.push('/login');
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [pathname, router]);
+  }, [isAuthenticated, authLoading, pathname, router, user]);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
@@ -31,8 +38,8 @@ export default function DealerLayout({
     );
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('dealerAuth');
+  const handleLogout = async () => {
+    await logout();
     router.push('/dealer/login');
   };
 
@@ -42,6 +49,9 @@ export default function DealerLayout({
     { href: '/dealer/orders', label: 'Orders', icon: '🛒' },
     { href: '/dealer/commissions', label: 'Commissions', icon: '💰' },
   ];
+
+  // Show sidebar only when authenticated as dealer
+  const showSidebar = isAuthenticated && (user?.role === 'dealer' || user?.role === 'admin');
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -60,13 +70,13 @@ export default function DealerLayout({
               </div>
             </div>
             
-            {isAuthenticated && (
+            {showSidebar && (
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-600">
                   <div className="w-8 h-8 bg-zinc-200 rounded-full flex items-center justify-center text-zinc-700 font-semibold text-xs">
-                    DP
+                    {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'DP'}
                   </div>
-                  <span>Dealer Partner</span>
+                  <span>{user?.name || 'Dealer Partner'}</span>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -81,7 +91,7 @@ export default function DealerLayout({
       </nav>
 
       {/* Sidebar Navigation (Desktop) */}
-      {isAuthenticated && (
+      {showSidebar && (
         <div className="flex">
           <aside className="hidden lg:block w-64 bg-white border-r border-zinc-200 min-h-[calc(100vh-4rem)] sticky top-16">
             <nav className="p-4 space-y-1">
@@ -134,7 +144,7 @@ export default function DealerLayout({
       )}
 
       {/* Login page renders directly without sidebar */}
-      {!isAuthenticated && pathname === '/dealer/login' && (
+      {!showSidebar && pathname === '/dealer/login' && (
         <main>{children}</main>
       )}
     </div>
