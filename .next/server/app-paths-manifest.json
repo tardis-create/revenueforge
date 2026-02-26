@@ -5,6 +5,7 @@
   "/(admin)/admin/page": "app/(admin)/admin/page.js",
   "/(admin)/admin/products/page": "app/(admin)/admin/products/page.js",
   "/(admin)/admin/quotes/page": "app/(admin)/admin/quotes/page.js",
+  "/(admin)/admin/settings/page": "app/(admin)/admin/settings/page.js",
   "/(admin)/analytics/page": "app/(admin)/analytics/page.js",
   "/(admin)/dealers/page": "app/(admin)/dealers/page.js",
   "/(admin)/leads/page": "app/(admin)/leads/page.js",
@@ -27,6 +28,9 @@
   "/api/[[...routes]]/route": "app-edge-has-no-entrypoint",
   "/api/health/route": "app-edge-has-no-entrypoint",
   "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/forgot-password/page": "app/forgot-password/page.js",
   "/login/page": "app/login/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/register/page": "app/register/page.js",
+  "/reset-password/page": "app/reset-password/page.js"
 }

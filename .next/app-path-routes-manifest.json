@@ -5,6 +5,7 @@
   "/(admin)/admin/page": "/admin",
   "/(admin)/admin/products/page": "/admin/products",
   "/(admin)/admin/quotes/page": "/admin/quotes",
+  "/(admin)/admin/settings/page": "/admin/settings",
   "/(admin)/analytics/page": "/analytics",
   "/(admin)/dealers/page": "/dealers",
   "/(admin)/leads/page": "/leads",
@@ -27,6 +28,9 @@
   "/api/[[...routes]]/route": "/api/[[...routes]]",
   "/api/health/route": "/api/health",
   "/favicon.ico/route": "/favicon.ico",
+  "/forgot-password/page": "/forgot-password",
   "/login/page": "/login",
-  "/page": "/"
+  "/page": "/",
+  "/register/page": "/register",
+  "/reset-password/page": "/reset-password"
 }
