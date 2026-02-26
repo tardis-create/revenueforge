@@ -1,28 +1,46 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [localError, setLocalError] = useState('');
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const redirectTo = searchParams.get('redirect') || '/admin';
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setLocalError('');
+    clearError();
 
-    // TODO: Implement actual authentication
-    // For now, just redirect to admin dashboard
-    setTimeout(() => {
-      setLoading(false);
-      router.push('/admin');
-    }, 500);
+    if (!email || !password) {
+      setLocalError('Please enter both email and password');
+      return;
+    }
+
+    try {
+      await login(email, password);
+      // Login will redirect automatically based on user role
+    } catch {
+      setLocalError('Invalid email or password');
+    }
   };
+
+  const displayError = localError || error;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center p-4">
@@ -57,6 +75,8 @@ export default function AdminLoginPage() {
                 className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="admin@revenueforge.com"
                 required
+                autoComplete="email"
+                disabled={isLoading}
               />
             </div>
 
@@ -72,40 +92,73 @@ export default function AdminLoginPage() {
                 className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
+                disabled={isLoading}
               />
             </div>
 
-            {error && (
+            {displayError && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
-                {error}
+                {displayError}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-zinc-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign In'
+              )}
             </button>
+
+            <div className="text-center">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-zinc-500 hover:text-purple-400 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
 
           {/* Footer */}
-          <div className="mt-6 text-center text-sm text-zinc-500">
-            <p>Are you a dealer?{' '}
-              <Link href="/dealer/login" className="text-purple-400 hover:text-purple-300 transition-colors">
+          <div className="mt-6 space-y-3">
+            <p className="text-center text-sm text-zinc-500">
+              Are you a dealer?{' '}
+              <Link href="/dealer/login" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
                 Login here
               </Link>
             </p>
-          </div>
-
-          <div className="mt-4 text-center text-xs text-zinc-600">
-            <Link href="/" className="hover:text-zinc-400 transition-colors">
-              ← Back to Home
-            </Link>
+            <p className="text-center text-xs text-zinc-600">
+              <Link href="/" className="hover:text-zinc-400 transition-colors">
+                ← Back to Home
+              </Link>
+            </p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center">
+        <div className="text-zinc-400">Loading...</div>
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
   );
 }

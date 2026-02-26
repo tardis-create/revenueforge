@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastProvider } from '@/app/components';
+import { useAuth } from '@/lib/auth-context';
+import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 
 // Sidebar navigation items
 const navItems = [
@@ -76,13 +78,24 @@ function Breadcrumbs() {
 // User menu component
 function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user: authUser, logout } = useAuth();
   
-  // Mock user data - replace with actual auth
-  const user = {
+  // Use auth user data if available, otherwise fall back to defaults
+  const user = authUser ? {
+    name: authUser.name,
+    email: authUser.email,
+    role: authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1),
+    initials: authUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+  } : {
     name: 'Admin User',
     email: 'admin@revenueforge.com',
     role: 'Admin',
     initials: 'AU',
+  };
+
+  const handleLogout = async () => {
+    setIsOpen(false);
+    await logout();
   };
 
   return (
@@ -148,10 +161,7 @@ function UserMenu() {
               </div>
               <div className="p-2 border-t border-zinc-800/50">
                 <button
-                  onClick={() => {
-                    // Handle logout
-                    setIsOpen(false);
-                  }}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,8 +274,9 @@ export default function AdminLayout({
   }, [pathname]);
 
   return (
-    <ToastProvider>
-      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
+    <ProtectedRoute>
+      <ToastProvider>
+        <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
       {/* Background effects */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -349,6 +360,7 @@ export default function AdminLayout({
         </main>
       </div>
       </div>
-    </ToastProvider>
+      </ToastProvider>
+    </ProtectedRoute>
   );
 }
