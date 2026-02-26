@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 
 import { useState } from 'react'
 import { 
@@ -136,18 +137,18 @@ export default function DealerProductsPage() {
       <div className="relative z-10">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-6 lg:px-12 border-b border-zinc-800/50">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
-          </a>
+          </Link>
           
           <div className="flex items-center gap-6">
-            <a href="/dealer" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Dashboard</a>
-            <a href="/dealer/products" className="text-zinc-100 text-sm font-medium">Products</a>
-            <a href="/dealer/orders" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Orders</a>
-            <a href="/dealer/commissions" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Commissions</a>
+            <Link href="/dealer" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Dashboard</Link>
+            <Link href="/dealer/products" className="text-zinc-100 text-sm font-medium">Products</Link>
+            <Link href="/dealer/orders" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Orders</Link>
+            <Link href="/dealer/commissions" className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm">Commissions</Link>
           </div>
         </nav>
 
