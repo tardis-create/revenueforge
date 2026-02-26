@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MobileNav } from "./components/MobileNav";
 import { OfflineIndicator } from "./components/NetworkStatus";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
@@ -60,13 +61,15 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://revenueforge-api.pronitopenclaw.workers.dev" />
       </head>
       <body className="font-satoshi antialiased bg-zinc-950 text-zinc-100">
-        {/* Skip to main content link for accessibility */}
-        <a href="#main-content" className="skip-to-main">
-          Skip to main content
-        </a>
-        <OfflineIndicator />
-        {children}
-        <MobileNav />
+        <Providers>
+          {/* Skip to main content link for accessibility */}
+          <a href="#main-content" className="skip-to-main">
+            Skip to main content
+          </a>
+          <OfflineIndicator />
+          {children}
+          <MobileNav />
+        </Providers>
       </body>
     </html>
   );
