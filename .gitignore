@@ -10,3 +10,8 @@ playwright/.cache/
 node_modules/
 .env.local
 .env.*.local
+
+# Build output
+.next/
+.vercel/
+tsconfig.tsbuildinfo
