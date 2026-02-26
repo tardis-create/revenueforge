@@ -141,6 +141,12 @@
       "namedRegex": "^/admin/quotes(?:/)?$"
     },
     {
+      "page": "/admin/settings",
+      "regex": "^/admin/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/settings(?:/)?$"
+    },
+    {
       "page": "/analytics",
       "regex": "^/analytics(?:/)?$",
       "routeKeys": {},
@@ -201,6 +207,12 @@
       "namedRegex": "^/favicon\\.ico(?:/)?$"
     },
     {
+      "page": "/forgot-password",
+      "regex": "^/forgot\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/forgot\\-password(?:/)?$"
+    },
+    {
       "page": "/leads",
       "regex": "^/leads(?:/)?$",
       "routeKeys": {},
@@ -229,6 +241,18 @@
       "regex": "^/quotes(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/quotes(?:/)?$"
+    },
+    {
+      "page": "/register",
+      "regex": "^/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/register(?:/)?$"
+    },
+    {
+      "page": "/reset-password",
+      "regex": "^/reset\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/reset\\-password(?:/)?$"
     },
     {
       "page": "/rfq",
