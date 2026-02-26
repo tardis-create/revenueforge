@@ -1,3 +1,0 @@
-module.exports=[54878,a=>{"use strict";let b="https://revenueforge-api.pronitopenclaw.workers.dev";async function c(a,c){return fetch(`${b}${a}`,{...c,headers:{"Content-Type":"application/json",...c?.headers}})}a.s(["API_BASE_URL",0,b,"apiFetch",()=>c],54878)},36040,a=>{"use strict";a.s(["CATEGORIES",0,["Sensors","Controllers","Measurement","Safety","Analysis","Actuators","Communication","Power"],"INDUSTRIES",0,["Manufacturing","Oil & Gas","Water Treatment","Food & Beverage","Chemical","Pharmaceutical","Energy","All Industries"]])}];
-
-//# sourceMappingURL=workspace_revenueforge_lib_84daf1b8._.js.map
