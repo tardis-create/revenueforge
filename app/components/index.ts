@@ -31,6 +31,9 @@ export {
   FormSkeleton
 } from "./DataSkeletons"
 
+// Auth
+export { ProtectedRoute } from "./ProtectedRoute"
+
 // React Bits replacements
 export { BlurText } from "./BlurText"
 export { AnimatedContent } from "./AnimatedContent"
