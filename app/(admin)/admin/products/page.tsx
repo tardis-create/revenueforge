@@ -19,10 +19,15 @@ import {
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('')
+  const [industryFilter, setIndustryFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('')
   const { success, error: showError } = useToast()
 
   // Fetch products
@@ -47,6 +52,39 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  // Filter products based on search and filters
+  useEffect(() => {
+    let filtered = [...products]
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.sku.toLowerCase().includes(query) ||
+        (p.description && p.description.toLowerCase().includes(query))
+      )
+    }
+    
+    // Category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(p => p.category === categoryFilter)
+    }
+    
+    // Industry filter
+    if (industryFilter) {
+      filtered = filtered.filter(p => p.industry === industryFilter)
+    }
+    
+    // Status filter
+    if (statusFilter) {
+      const isActive = statusFilter === 'active'
+      filtered = filtered.filter(p => p.is_active === isActive)
+    }
+    
+    setFilteredProducts(filtered)
+  }, [products, searchQuery, categoryFilter, industryFilter, statusFilter])
 
   // Handle delete
   const handleDelete = async (id: string) => {
@@ -143,6 +181,124 @@ export default function AdminProductsPage() {
         </header>
 
         <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-12 pb-24 md:pb-12">
+          {/* Search and Filters */}
+          {!loading && products.length > 0 && (
+            <AnimatedContent delay={0.15}>
+              <LiquidCard glassIntensity="low" className="mb-6">
+                <div className="p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Search */}
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                      />
+                    </div>
+
+                    {/* Category Filter */}
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                    >
+                      <option value="">All Categories</option>
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+
+                    {/* Industry Filter */}
+                    <select
+                      value={industryFilter}
+                      onChange={(e) => setIndustryFilter(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                    >
+                      <option value="">All Industries</option>
+                      {INDUSTRIES.map(ind => (
+                        <option key={ind} value={ind}>{ind}</option>
+                      ))}
+                    </select>
+
+                    {/* Status Filter */}
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                    >
+                      <option value="">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  {/* Active Filters */}
+                  {(searchQuery || categoryFilter || industryFilter || statusFilter) && (
+                    <div className="mt-4 flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-zinc-500">Active filters:</span>
+                      {searchQuery && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg text-sm">
+                          Search: {searchQuery}
+                          <button onClick={() => setSearchQuery('')} className="hover:text-purple-300">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      {categoryFilter && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-sm">
+                          {categoryFilter}
+                          <button onClick={() => setCategoryFilter('')} className="hover:text-cyan-300">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      {industryFilter && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-sm">
+                          {industryFilter}
+                          <button onClick={() => setIndustryFilter('')} className="hover:text-cyan-300">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      {statusFilter && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm">
+                          {statusFilter === 'active' ? 'Active' : 'Inactive'}
+                          <button onClick={() => setStatusFilter('')} className="hover:text-emerald-300">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      <button
+                        onClick={() => {
+                          setSearchQuery('')
+                          setCategoryFilter('')
+                          setIndustryFilter('')
+                          setStatusFilter('')
+                        }}
+                        className="text-sm text-zinc-400 hover:text-zinc-200 underline"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </LiquidCard>
+            </AnimatedContent>
+          )}
+
           {/* Form Modal */}
           {showForm && (
             <ProductForm 
@@ -170,6 +326,25 @@ export default function AdminProductsPage() {
               <CardSkeleton />
               <CardSkeleton />
             </div>
+          ) : filteredProducts.length === 0 && products.length > 0 ? (
+            <EmptyState
+              icon={
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
+              title="No products match your filters"
+              description="Try adjusting your search or filter criteria."
+              action={{
+                label: "Clear Filters",
+                onClick: () => {
+                  setSearchQuery('')
+                  setCategoryFilter('')
+                  setIndustryFilter('')
+                  setStatusFilter('')
+                }
+              }}
+            />
           ) : products.length === 0 ? (
             <EmptyState
               icon={
@@ -206,6 +381,9 @@ export default function AdminProductsPage() {
                             Price Range
                           </th>
                           <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Stock
+                          </th>
+                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                             Status
                           </th>
                           <th scope="col" className="relative px-6 py-4">
@@ -214,8 +392,8 @@ export default function AdminProductsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/50">
-                        {products.map((product) => (
-                          <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
+                        {filteredProducts.map((product) => (
+                          <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors cursor-pointer" onClick={() => handleEdit(product)}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="h-10 w-10 flex-shrink-0">
@@ -259,6 +437,17 @@ export default function AdminProductsPage() {
                               {product.price_range || '-'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`text-sm font-medium ${
+                                (product.stock || 0) > 10 
+                                  ? 'text-emerald-400' 
+                                  : (product.stock || 0) > 0 
+                                    ? 'text-yellow-400' 
+                                    : 'text-red-400'
+                              }`}>
+                                {product.stock ?? 0}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                 product.is_active 
                                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -267,7 +456,7 @@ export default function AdminProductsPage() {
                                 {product.is_active ? 'Active' : 'Inactive'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleEdit(product)}
                                 className="text-purple-400 hover:text-purple-300 mr-4 transition-colors"
@@ -316,6 +505,7 @@ function ProductForm({
     description: product?.description || '',
     price_range: product?.price_range || '',
     image_url: product?.image_url || '',
+    stock: product?.stock ?? 0,
     is_active: product?.is_active ?? true,
     technical_specs: product?.technical_specs || {},
   }))
@@ -541,6 +731,21 @@ function ProductForm({
                       value={formData.price_range || ''}
                       onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
                       placeholder="e.g., $500-$800"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                    />
+                  </div>
+
+                  {/* Stock */}
+                  <div>
+                    <label htmlFor="stock" className="block text-sm text-zinc-400 mb-2">
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      id="stock"
+                      value={formData.stock ?? 0}
+                      onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                      min="0"
                       className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
                     />
                   </div>
