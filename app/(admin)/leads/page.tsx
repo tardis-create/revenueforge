@@ -5,9 +5,8 @@ import {
   BlurText, 
   AnimatedContent,
   GlareHover,
-  DataTableSkeleton,
-  ApiError,
-  useToast
+  CardSkeleton,
+  ErrorState
 } from '@/app/components'
 
 interface Lead {
@@ -29,7 +28,6 @@ export default function LeadsPage() {
   const [error, setError] = useState<Error | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const { error: showError } = useToast()
 
   const fetchLeads = async () => {
     setLoading(true)
@@ -107,7 +105,6 @@ export default function LeadsPage() {
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch leads')
       setError(error)
-      showError('Failed to load leads', error.message)
     } finally {
       setLoading(false)
     }
@@ -198,13 +195,16 @@ export default function LeadsPage() {
 
       {/* Leads Table */}
       {loading ? (
-        <DataTableSkeleton rows={5} columns={7} showStats={6} />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
       ) : error ? (
-        <ApiError 
-          error={error} 
-          onRetry={fetchLeads}
+        <ErrorState 
           title="Failed to load leads"
-          message="We couldn't fetch the lead list. Please check your connection and try again."
+          description="We couldn't fetch the lead list. Please check your connection and try again."
+          retry={fetchLeads}
         />
       ) : filteredLeads.length === 0 ? (
         <AnimatedContent>
