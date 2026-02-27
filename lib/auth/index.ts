@@ -35,6 +35,7 @@ export interface JWTPayload {
   userId: string;
   email: string;
   role: string;
+  type?: string; // 'refresh' for refresh tokens
 }
 
 /**
@@ -86,7 +87,8 @@ export async function verifyToken(token: string, JWT_SECRET?: string): Promise<J
     return {
       userId: payload.userId as string,
       email: payload.email as string,
-      role: payload.role as string
+      role: payload.role as string,
+      type: payload.type as string | undefined
     };
   } catch {
     return null;
@@ -239,11 +241,28 @@ export async function verifyPassword(password: string, storedHash: string): Prom
     
     const computedHashHex = bufferToHex(new Uint8Array(hashBuffer as ArrayBuffer));
     
-    // Constant-time comparison
-    return computedHashHex === hashHex;
+    // Constant-time comparison to prevent timing attacks
+    return constantTimeCompare(computedHashHex, hashHex);
   } catch {
     return false;
   }
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ * Uses byte-by-byte XOR to ensure comparison time is not affected by input
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  
+  return result === 0;
 }
 
 /**

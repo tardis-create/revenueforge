@@ -36,6 +36,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     }
     
+    // Ensure this is actually a refresh token, not an access token
+    if (payload.type !== 'refresh') {
+      return NextResponse.json({ error: 'Invalid token type. Access tokens cannot be used for refresh.' }, { status: 401 });
+    }
+    
     // Check if refresh token matches database and is not expired
     const user = await db.prepare(
       `SELECT id, email, role, refresh_token, refresh_token_expires_at 
