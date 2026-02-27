@@ -5,9 +5,8 @@ import {
   BlurText, 
   AnimatedContent,
   GlareHover,
-  DataTableSkeleton,
-  ApiError,
-  useToast
+  CardSkeleton,
+  ErrorState
 } from '@/app/components'
 
 interface Dealer {
@@ -28,7 +27,6 @@ export default function DealersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
-  const { error: showError } = useToast()
 
   const fetchDealers = async () => {
     setLoading(true)
@@ -106,7 +104,6 @@ export default function DealersPage() {
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch dealers')
       setError(error)
-      showError('Failed to load dealers', error.message)
     } finally {
       setLoading(false)
     }
@@ -200,13 +197,16 @@ export default function DealersPage() {
 
       {/* Dealers Table */}
       {loading ? (
-        <DataTableSkeleton rows={5} columns={7} showStats={4} />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
       ) : error ? (
-        <ApiError 
-          error={error} 
-          onRetry={fetchDealers}
+        <ErrorState 
           title="Failed to load dealers"
-          message="We couldn't fetch the dealer list. Please check your connection and try again."
+          description="We couldn't fetch the dealer list. Please check your connection and try again."
+          retry={fetchDealers}
         />
       ) : filteredDealers.length === 0 ? (
         <AnimatedContent>
