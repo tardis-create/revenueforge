@@ -1,1 +1,1 @@
-export { authMiddleware, requireAdmin, getCurrentUser } from './auth';
+export { authMiddleware, requireAuth, requireAdmin, requireRole, getCurrentUser } from './auth';

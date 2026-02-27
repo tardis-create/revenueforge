@@ -3,6 +3,8 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import products from './routes/products';
 import templates from './routes/templates';
+import users from './routes/users';
+import analytics from './routes/analytics';
 
 // Create Hono app
 const app = new Hono();
@@ -36,6 +38,12 @@ app.route('/api/products', products);
 
 // Mount email template routes under /api/templates
 app.route('/api/templates', templates);
+
+// Mount user routes under /api/users
+app.route('/api/users', users);
+
+// Mount analytics routes under /api/analytics
+app.route('/api/analytics', analytics);
 
 // 404 handler
 app.notFound((c) => {
