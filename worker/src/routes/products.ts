@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { authMiddleware, requireAdmin } from '../middleware/auth';
 import { generateId, getTimestamp } from '../db';
 import type { Env, Product, ProductImage } from '../types';
+import { logAction } from '../utils/auditLog';
 
 const products = new Hono<{ Bindings: Env }>();
 
@@ -110,7 +111,7 @@ products.get('/:id', async (c) => {
     ).bind(productId).all();
     
     product.images = imagesResult.results as unknown as ProductImage[];
-    
+
     return c.json({ product });
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -163,7 +164,10 @@ products.post('/', authMiddleware, requireAdmin, async (c) => {
     ).bind(id).first() as Product;
     
     product.images = [];
-    
+
+    const callerPost = c.get('user');
+    await logAction(c.env, db, callerPost?.userId ?? null, 'product.created', 'product', id, { name: product.name, category: product.category });
+
     return c.json({ product }, 201);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -258,7 +262,10 @@ products.patch('/:id', authMiddleware, requireAdmin, async (c) => {
     ).bind(productId).all();
     
     product.images = imagesResult.results as unknown as ProductImage[];
-    
+
+    const patchCaller = c.get('user');
+    await logAction(c.env, db, patchCaller?.userId ?? null, 'product.updated', 'product', productId, { fields: Object.keys(body) });
+
     return c.json({ product });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -305,6 +312,9 @@ products.delete('/:id', authMiddleware, requireAdmin, async (c) => {
       `DELETE FROM products WHERE id = ?`
     ).bind(productId).run();
     
+    const delCaller = c.get('user');
+    await logAction(c.env, db, delCaller?.userId ?? null, 'product.deleted', 'product', productId, { name: (product as any).name });
+
     return c.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);
