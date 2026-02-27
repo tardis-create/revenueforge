@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import products from './routes/products';
+import templates from './routes/templates';
 
 // Create Hono app
 const app = new Hono();
@@ -32,6 +33,9 @@ app.get('/health', (c) => {
 
 // Mount product routes under /api/products
 app.route('/api/products', products);
+
+// Mount email template routes under /api/templates
+app.route('/api/templates', templates);
 
 // 404 handler
 app.notFound((c) => {
