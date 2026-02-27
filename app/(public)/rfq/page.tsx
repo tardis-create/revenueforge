@@ -118,15 +118,25 @@ export default function RFQForm() {
     setSubmitStatus(null);
 
     try {
+      // Transform camelCase to snake_case for API compatibility
+      const payload = {
+        company_name: formData.companyName,
+        contact_name: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        product_requirements: formData.productRequirements,
+        quantity: Number(formData.quantity),
+        unit: formData.unit,
+        delivery_timeline: formData.deliveryTimeline,
+        additional_notes: formData.additionalNotes,
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/rfq`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          quantity: Number(formData.quantity),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
