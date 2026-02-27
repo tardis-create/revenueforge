@@ -38,6 +38,33 @@ export interface ProductImage {
   created_at: string;
 }
 
+export interface Dealer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  region: string | null;
+  status: 'active' | 'inactive' | 'suspended';
+  commission_rate: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Commission {
+  id: string;
+  dealer_id: string;
+  lead_id: string | null;
+  amount: number;
+  rate: number;
+  status: 'pending' | 'approved' | 'paid' | 'cancelled';
+  description: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProductInput {
   name: string;
   description?: string;
