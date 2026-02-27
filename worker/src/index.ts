@@ -5,6 +5,7 @@ import products from './routes/products';
 import templates from './routes/templates';
 import users from './routes/users';
 import analytics from './routes/analytics';
+import dealers from './routes/dealers';
 
 // Create Hono app
 const app = new Hono();
@@ -44,6 +45,9 @@ app.route('/api/users', users);
 
 // Mount analytics routes under /api/analytics
 app.route('/api/analytics', analytics);
+
+// Mount dealer routes under /api/dealers
+app.route('/api/dealers', dealers);
 
 // 404 handler
 app.notFound((c) => {
