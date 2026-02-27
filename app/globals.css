@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Base theme variables - will be overridden by ThemeProvider */
 :root {
   --background: #09090b;
   --foreground: #fafafa;
@@ -15,6 +16,96 @@
   --accent-foreground: #fafafa;
   --border: #27272a;
   --ring: #a855f7;
+}
+
+/* Light theme preset */
+[data-theme="light"] {
+  --background: #fafafa;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --primary: #9333ea;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #09090b;
+  --border: #e4e4e7;
+  --ring: #9333ea;
+}
+
+/* Midnight theme preset */
+[data-theme="midnight"] {
+  --background: #0c1222;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #f8fafc;
+  --secondary: #334155;
+  --secondary-foreground: #f8fafc;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --border: #334155;
+  --ring: #3b82f6;
+}
+
+/* Emerald theme preset */
+[data-theme="emerald"] {
+  --background: #0a0f0d;
+  --foreground: #f0fdf4;
+  --card: #14261e;
+  --card-foreground: #f0fdf4;
+  --primary: #10b981;
+  --primary-foreground: #f0fdf4;
+  --secondary: #1a3029;
+  --secondary-foreground: #f0fdf4;
+  --muted: #1a3029;
+  --muted-foreground: #86efac;
+  --accent: #14261e;
+  --accent-foreground: #f0fdf4;
+  --border: #1a3029;
+  --ring: #10b981;
+}
+
+/* Corporate theme preset */
+[data-theme="corporate"] {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
+  --accent-foreground: #1e293b;
+  --border: #e2e8f0;
+  --ring: #2563eb;
+}
+
+/* Warm theme preset */
+[data-theme="warm"] {
+  --background: #0f0a0a;
+  --foreground: #fef7ed;
+  --card: #1c1410;
+  --card-foreground: #fef7ed;
+  --primary: #f97316;
+  --primary-foreground: #fef7ed;
+  --secondary: #2a1f1a;
+  --secondary-foreground: #fef7ed;
+  --muted: #2a1f1a;
+  --muted-foreground: #fdba74;
+  --accent: #1c1410;
+  --accent-foreground: #fef7ed;
+  --border: #2a1f1a;
+  --ring: #f97316;
 }
 
 @theme inline {
@@ -39,8 +130,19 @@
   border-color: var(--border);
 }
 
+/* Smooth theme transitions */
 html {
   scroll-behavior: smooth;
+}
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 300ms ease, 
+              border-color 300ms ease, 
+              color 300ms ease,
+              box-shadow 300ms ease !important;
 }
 
 body {
@@ -85,15 +187,24 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
-/* Gradient text */
+/* Gradient text - uses primary color */
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--ring) 50%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Glow effects */
+/* Glow effects - use primary color */
+.glow-primary {
+  box-shadow: 0 0 40px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.glow-accent {
+  box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+/* Legacy glow classes for backwards compatibility */
 .glow-purple {
   box-shadow: 0 0 40px rgba(168, 85, 247, 0.15);
 }
@@ -112,7 +223,7 @@ body {
   
   /* Better tap highlight */
   * {
-    -webkit-tap-highlight-color: rgba(168, 85, 247, 0.1);
+    -webkit-tap-highlight-color: color-mix(in srgb, var(--primary) 10%, transparent);
   }
   
   /* Disable hover on touch devices */

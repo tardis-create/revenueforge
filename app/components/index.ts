@@ -31,3 +31,7 @@ export { GlareHover } from "./GlareHover"
 export { SpotlightCard } from "./SpotlightCard"
 export { Magnet } from "./Magnet"
 export { ClickSpark } from "./ClickSpark"
+
+// Theme system
+export { ThemeSwitcher } from "./ThemeSwitcher"
+export { Logo, BrandingDisplay } from "./Branding"

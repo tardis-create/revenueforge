@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Logo } from "./Branding"
 
 const navItems = [
   { 
@@ -46,6 +47,15 @@ const navItems = [
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/theme", 
+    label: "Theme", 
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
       </svg>
     )
   },
@@ -95,28 +105,25 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         }}
         className={`
           fixed top-0 left-0 h-full w-[280px] z-50
-          bg-zinc-900/95 backdrop-blur-lg border-r border-zinc-800/50
+          bg-[var(--card)]/95 backdrop-blur-lg border-r border-[var(--border)]
           lg:translate-x-0 lg:static lg:z-auto
           ${isOpen ? 'lg:translate-x-0' : 'lg:translate-x-0'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-6 py-6 border-b border-zinc-800/50">
+          <div className="flex items-center justify-between px-6 py-6 border-b border-[var(--border)]">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
+              <Logo size="md" showText={true} />
             </Link>
             
             {/* Close button for mobile */}
             <button
               onClick={onToggle}
-              className="lg:hidden p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-[var(--secondary)] transition-colors"
               aria-label="Close sidebar"
             >
-              <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -124,7 +131,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <p className="px-3 mb-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+            <p className="px-3 mb-4 text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">
               Admin Menu
             </p>
             
@@ -141,8 +148,8 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                       flex items-center gap-3 px-3 py-3 rounded-lg
                       transition-all cursor-pointer
                       ${isActive 
-                        ? "bg-purple-500/10 text-purple-400 border-l-2 border-purple-500" 
-                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"}
+                        ? "bg-[var(--primary)]/10 text-[var(--primary)] border-l-2 border-[var(--primary)]" 
+                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]"}
                     `}
                   >
                     {item.icon}
@@ -151,7 +158,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                     {isActive && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500"
+                        className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--primary)]"
                       />
                     )}
                   </motion.div>
@@ -161,12 +168,12 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="px-4 py-4 border-t border-zinc-800/50">
+          <div className="px-4 py-4 border-t border-[var(--border)]">
             <Link href="/">
               <motion.div
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex items-center gap-3 px-3 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all cursor-pointer"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)] transition-all cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -181,10 +188,10 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
       {/* Mobile hamburger button */}
       <button
         onClick={onToggle}
-        className="fixed top-4 left-4 z-30 lg:hidden p-2 rounded-lg bg-zinc-900/90 backdrop-blur border border-zinc-800/50"
+        className="fixed top-4 left-4 z-30 lg:hidden p-2 rounded-lg bg-[var(--card)]/90 backdrop-blur border border-[var(--border)]"
         aria-label="Open sidebar"
       >
-        <svg className="w-6 h-6 text-zinc-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-6 h-6 text-[var(--foreground)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
