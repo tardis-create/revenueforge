@@ -53,11 +53,11 @@ interface RFQ {
   created_at: string
 }
 
-const DEFAULT_TERMS = \`1. Prices are valid for 30 days from the quote date.
+const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quote date.
 2. Payment terms: Net 30 days from invoice date.
 3. Delivery: Within 2-4 weeks from order confirmation.
 4. Warranty: 12 months from delivery date.
-5. Taxes: Applicable taxes extra unless mentioned otherwise.\`
+5. Taxes: Applicable taxes extra unless mentioned otherwise.`
 
 export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([])
@@ -627,6 +627,27 @@ function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; on
             </div>
           </div>
         </AnimatedContent>
+      </div>
+    </div>
+  )
+}
+
+// Placeholder CreateQuoteModal component
+function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (quote: any) => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-md w-full mx-4">
+        <h2 className="text-xl font-bold text-zinc-100 mb-4">Create Quote</h2>
+        <p className="text-zinc-400 mb-6">Quote creation form coming soon.</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   )
