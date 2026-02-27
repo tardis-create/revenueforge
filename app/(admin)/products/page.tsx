@@ -81,184 +81,264 @@ export default function AdminProductsPage() {
       <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
       
       {/* Header */}
-      <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
+      <header className="relative px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12 border-b border-zinc-800/50">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <AnimatedContent>
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
                 <BlurText text="Product Management" />
               </h1>
-              <p className="text-zinc-400">
+              <p className="text-sm sm:text-base text-zinc-400">
                 Add, edit, and manage product catalog
               </p>
             </div>
           </AnimatedContent>
             
-            <AnimatedContent delay={0.1}>
-              <SpringButton
-                variant="primary"
-                onClick={() => {
-                  setEditingProduct(null)
-                  setShowForm(true)
-                }}
-                className="flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Product
-              </SpringButton>
-            </AnimatedContent>
-          </div>
-        </header>
-
-        <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-12 pb-24 md:pb-12">
-          {/* Form Modal */}
-          {showForm && (
-            <ProductForm 
-              product={editingProduct}
-              onSuccess={handleFormSuccess}
-              onCancel={() => {
-                setShowForm(false)
+          <AnimatedContent delay={0.1}>
+            <SpringButton
+              variant="primary"
+              onClick={() => {
                 setEditingProduct(null)
+                setShowForm(true)
               }}
-            />
-          )}
+              className="flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="hidden sm:inline">Add Product</span>
+              <span className="sm:hidden">Add</span>
+            </SpringButton>
+          </AnimatedContent>
+        </div>
+      </header>
 
-          {/* Error State */}
-          {error && (
-            <ErrorState 
-              description={error}
-              retry={fetchProducts}
-            />
-          )}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12">
+        {/* Form Modal */}
+        {showForm && (
+          <ProductForm 
+            product={editingProduct}
+            onSuccess={handleFormSuccess}
+            onCancel={() => {
+              setShowForm(false)
+              setEditingProduct(null)
+            }}
+          />
+        )}
 
-          {/* Loading State */}
-          {loading ? (
-            <div className="space-y-4">
-              <CardSkeleton />
-              <CardSkeleton />
-              <CardSkeleton />
-            </div>
-          ) : products.length === 0 ? (
-            <EmptyState
-              icon={
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              }
-              title="No products yet"
-              description="Get started by creating your first product in the catalog."
-              action={{
-                label: "Add Product",
-                onClick: () => setShowForm(true)
-              }}
-            />
-          ) : (
-            <LiquidCard glassIntensity="low">
+        {/* Error State */}
+        {error && (
+          <ErrorState 
+            description={error}
+            retry={fetchProducts}
+          />
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="space-y-4">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        ) : products.length === 0 ? (
+          <EmptyState
+            icon={
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            }
+            title="No products yet"
+            description="Get started by creating your first product in the catalog."
+            action={{
+              label: "Add Product",
+              onClick: () => setShowForm(true)
+            }}
+          />
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <LiquidCard glassIntensity="low" className="hidden md:block">
               <div className="overflow-x-auto">
                 <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b border-zinc-800">
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            Product
-                          </th>
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            SKU
-                          </th>
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            Category
-                          </th>
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            Industry
-                          </th>
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            Price Range
-                          </th>
-                          <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th scope="col" className="relative px-6 py-4">
-                            <span className="sr-only">Actions</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800/50">
-                        {products.map((product) => (
-                          <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="h-10 w-10 flex-shrink-0">
-                                  {product.image_url ? (
-                                    <img 
-                                      className="h-10 w-10 rounded-lg object-cover" 
-                                      src={product.image_url} 
-                                      alt={product.name}
-                                    />
-                                  ) : (
-                                    <div className="h-10 w-10 rounded-lg bg-zinc-800 flex items-center justify-center">
-                                      <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                      </svg>
-                                    </div>
-                                  )}
+                  <thead>
+                    <tr className="border-b border-zinc-800">
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        Product
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        SKU
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        Industry
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        Price Range
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="relative px-6 py-4">
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {products.map((product) => (
+                      <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              {product.image_url ? (
+                                <img 
+                                  className="h-10 w-10 rounded-lg object-cover" 
+                                  src={product.image_url} 
+                                  alt={product.name}
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+                                  <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2" />
+                                  </svg>
                                 </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-zinc-100">
-                                    {product.name}
-                                  </div>
-                                </div>
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-zinc-100">
+                                {product.name}
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-mono text-zinc-500">
-                                {product.sku}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                {product.category}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                {product.industry}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400">
-                              {product.price_range || '-'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                                product.is_active 
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                              }`}>
-                                {product.is_active ? 'Active' : 'Inactive'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                              <button
-                                onClick={() => handleEdit(product)}
-                                className="text-purple-400 hover:text-purple-300 mr-4 transition-colors"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(product.id)}
-                                className="text-red-400 hover:text-red-300 transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-mono text-zinc-500">
+                            {product.sku}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            {product.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            {product.industry}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-400">
+                          {product.price_range || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                            product.is_active 
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                          }`}>
+                            {product.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="text-purple-400 hover:text-purple-300 mr-4 transition-colors min-h-[44px] min-w-[44px] px-2"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors min-h-[44px] min-w-[44px] px-2"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </LiquidCard>
-          )}
-        </main>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {products.map((product) => (
+                <LiquidCard key={product.id} glassIntensity="low">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      {/* Product Image */}
+                      <div className="h-12 w-12 flex-shrink-0">
+                        {product.image_url ? (
+                          <img 
+                            className="h-12 w-12 rounded-lg object-cover" 
+                            src={product.image_url} 
+                            alt={product.name}
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-lg bg-zinc-800 flex items-center justify-center">
+                            <svg className="h-6 w-6 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-medium text-zinc-100 truncate">{product.name}</h3>
+                            <p className="text-xs text-zinc-500 font-mono">{product.sku}</p>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
+                            product.is_active 
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-zinc-800 text-zinc-500'
+                          }`}>
+                            {product.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-500/10 text-purple-400">
+                            {product.category}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-cyan-500/10 text-cyan-400">
+                            {product.industry}
+                          </span>
+                        </div>
+                        
+                        {/* Price & Actions */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800/50">
+                          <span className="text-sm text-zinc-400">
+                            {product.price_range || 'Price on request'}
+                          </span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="px-3 py-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 rounded-lg transition-colors min-h-[36px]"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="px-3 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 bg-red-500/10 rounded-lg transition-colors min-h-[36px]"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </LiquidCard>
+              ))}
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }
@@ -343,21 +423,21 @@ function ProductForm({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-      <div className="flex items-center justify-center min-h-screen px-4 py-8">
+      <div className="flex items-start justify-center min-h-screen px-4 py-6 sm:items-center sm:py-8">
         {/* Backdrop */}
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel}></div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} aria-hidden="true"></div>
 
         {/* Modal */}
         <AnimatedContent>
-          <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
             <form onSubmit={handleSubmit}>
-              <div className="p-6">
-                <h2 className="text-2xl font-bold text-zinc-100 mb-6">
+              <div className="p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 mb-6">
                   {product ? 'Edit Product' : 'Add New Product'}
                 </h2>
 
                 {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4">
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
                     {error}
                   </div>
                 )}
@@ -374,7 +454,7 @@ function ProductForm({
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors text-base"
                     />
                   </div>
 
@@ -389,12 +469,12 @@ function ProductForm({
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                       required
-                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors text-base"
                     />
                   </div>
 
-                  {/* Category & Industry */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Category & Industry - Stack on mobile */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="category" className="block text-sm text-zinc-400 mb-2">
                         Category <span className="text-red-400">*</span>
@@ -404,7 +484,7 @@ function ProductForm({
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         required
-                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors text-base"
                       >
                         {CATEGORIES.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -420,7 +500,7 @@ function ProductForm({
                         value={formData.industry}
                         onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                         required
-                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 focus:outline-none focus:border-purple-500/50 transition-colors text-base"
                       >
                         {INDUSTRIES.map(ind => (
                           <option key={ind} value={ind}>{ind}</option>
@@ -439,7 +519,7 @@ function ProductForm({
                       value={formData.description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors resize-none"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors resize-none text-base"
                     />
                   </div>
 
@@ -462,7 +542,7 @@ function ProductForm({
                             <button
                               type="button"
                               onClick={() => removeSpec(key)}
-                              className="text-zinc-500 hover:text-red-400 transition-colors"
+                              className="text-zinc-500 hover:text-red-400 transition-colors ml-1"
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -473,26 +553,26 @@ function ProductForm({
                       </div>
                     )}
 
-                    {/* Add new spec */}
-                    <div className="flex gap-2">
+                    {/* Add new spec - Stack on mobile */}
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
                         placeholder="Spec name"
                         value={specKey}
                         onChange={(e) => setSpecKey(e.target.value)}
-                        className="flex-1 px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="flex-1 px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors text-base"
                       />
                       <input
                         type="text"
                         placeholder="Value"
                         value={specValue}
                         onChange={(e) => setSpecValue(e.target.value)}
-                        className="flex-1 px-4 py-2.5 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="flex-1 px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors text-base"
                       />
                       <button
                         type="button"
                         onClick={addSpec}
-                        className="px-4 py-2.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
+                        className="px-4 py-3 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors min-h-[44px] sm:min-h-0"
                       >
                         Add
                       </button>
@@ -510,7 +590,7 @@ function ProductForm({
                       value={formData.price_range || ''}
                       onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
                       placeholder="e.g., $500-$800"
-                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors text-base"
                     />
                   </div>
 
@@ -525,18 +605,18 @@ function ProductForm({
                       value={formData.image_url || ''}
                       onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                       placeholder="https://..."
-                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                      className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors text-base"
                     />
                   </div>
 
                   {/* Active Status */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 py-2">
                     <input
                       type="checkbox"
                       id="is_active"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-purple-500/20"
+                      className="w-5 h-5 rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-purple-500/20"
                     />
                     <label htmlFor="is_active" className="text-sm text-zinc-300">
                       Active (visible in catalog)
@@ -545,12 +625,13 @@ function ProductForm({
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex justify-end gap-3">
+              {/* Actions - Stack on mobile */}
+              <div className="px-4 sm:px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex flex-col-reverse sm:flex-row justify-end gap-3">
                 <SpringButton
                   variant="secondary"
                   type="button"
                   onClick={onCancel}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </SpringButton>
@@ -558,7 +639,7 @@ function ProductForm({
                   variant="primary"
                   type="submit"
                   disabled={loading}
-                  className={loading ? 'opacity-50 cursor-not-allowed' : ''}
+                  className={`w-full sm:w-auto ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading ? 'Saving...' : (product ? 'Update Product' : 'Create Product')}
                 </SpringButton>
