@@ -560,7 +560,7 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg font-semibold text-zinc-100 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <QuickAction
-                href="/admin/products"
+                href="/products"
                 label="New Product"
                 delay={0.55}
                 icon={
@@ -570,7 +570,7 @@ export default function AdminDashboardPage() {
                 }
               />
               <QuickAction
-                href="/admin/quotes"
+                href="/quotes"
                 label="New Quote"
                 delay={0.6}
                 icon={
@@ -580,7 +580,7 @@ export default function AdminDashboardPage() {
                 }
               />
               <QuickAction
-                href="/admin/leads"
+                href="/leads"
                 label="View Leads"
                 delay={0.65}
                 icon={

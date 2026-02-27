@@ -16,7 +16,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/products", 
+    href: "/products", 
     label: "Products", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,7 +25,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/leads", 
+    href: "/leads", 
     label: "Leads", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/quotes", 
+    href: "/quotes", 
     label: "Quotes", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -43,7 +43,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/users", 
+    href: "/users", 
     label: "Users", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -52,7 +52,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/settings", 
+    href: "/settings", 
     label: "Settings", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
