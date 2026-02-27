@@ -7,24 +7,63 @@ const users = new Hono<{ Bindings: Env }>();
 
 type Role = 'admin' | 'dealer' | 'viewer';
 
-/** Simple SHA-256 hash using Web Crypto (available in CF Workers) */
-async function hashPassword(password: string): Promise<string> {
-  const buf = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(password)
+/**
+ * Hash a password using PBKDF2 via Web Crypto API.
+ * Returns { hash, salt } — both stored in the database.
+ */
+async function hashPassword(password: string, saltHex?: string): Promise<{ hash: string; salt: string }> {
+  // Generate a random 16-byte salt, or use provided one (for verification)
+  const saltBytes = saltHex
+    ? hexToBytes(saltHex)
+    : crypto.getRandomValues(new Uint8Array(16));
+
+  const salt = saltHex ?? bytesToHex(saltBytes);
+
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
   );
-  return Array.from(new Uint8Array(buf))
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: saltBytes,
+      iterations: 310000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    256
+  );
+
+  const hash = bytesToHex(new Uint8Array(derivedBits));
+  return { hash, salt };
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
+function hexToBytes(hex: string): Uint8Array {
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    arr[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+  }
+  return arr;
+}
+
 function validateUserInput(
   data: any,
-  requirePassword = true
+  requirePassword = true,
+  skipEmailCheck = false
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!data.email || typeof data.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+  if (!skipEmailCheck && (!data.email || typeof data.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))) {
     errors.push('A valid email is required');
   }
 
@@ -48,10 +87,9 @@ function validateUserInput(
 
 /**
  * GET /api/users — List all users
- * Requires auth; admin sees all, dealer/viewer see only themselves.
+ * Admin only.
  */
-users.get('/', requireAuth, async (c) => {
-  const caller = c.get('user');
+users.get('/', requireAuth, requireRole('admin'), async (c) => {
   const db = c.env.DB;
 
   try {
@@ -59,30 +97,17 @@ users.get('/', requireAuth, async (c) => {
     const limit = Math.min(parseInt(c.req.query('limit') || '20'), 100);
     const offset = (page - 1) * limit;
 
-    let rows, total;
+    const countResult = await db
+      .prepare('SELECT COUNT(*) as total FROM users')
+      .first();
+    const total = (countResult?.total as number) || 0;
 
-    if (caller.role === 'admin') {
-      const countResult = await db
-        .prepare('SELECT COUNT(*) as total FROM users')
-        .first();
-      total = (countResult?.total as number) || 0;
-
-      rows = await db
-        .prepare(
-          'SELECT id, email, name, role, active, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?'
-        )
-        .bind(limit, offset)
-        .all();
-    } else {
-      // Non-admins can only see themselves
-      total = 1;
-      rows = await db
-        .prepare(
-          'SELECT id, email, name, role, active, created_at, updated_at FROM users WHERE id = ? LIMIT 1'
-        )
-        .bind(caller.userId)
-        .all();
-    }
+    const rows = await db
+      .prepare(
+        'SELECT id, email, name, role, active, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      )
+      .bind(limit, offset)
+      .all();
 
     return c.json({
       data: rows.results,
@@ -149,15 +174,15 @@ users.post('/', requireAuth, requireRole('admin'), async (c) => {
 
   const id = generateId('usr');
   const now = getTimestamp();
-  const passwordHash = await hashPassword(body.password);
+  const { hash: passwordHash, salt: passwordSalt } = await hashPassword(body.password);
   const role: Role = body.role || 'viewer';
 
   try {
     await db
       .prepare(
-        'INSERT INTO users (id, email, password_hash, name, role, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)'
+        'INSERT INTO users (id, email, password_hash, password_salt, name, role, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)'
       )
-      .bind(id, body.email.toLowerCase(), passwordHash, body.name.trim(), role, now, now)
+      .bind(id, body.email.toLowerCase(), passwordHash, passwordSalt, body.name.trim(), role, now, now)
       .run();
 
     const created = await db
@@ -194,12 +219,17 @@ users.put('/:id', requireAuth, async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
+  // Reject email change attempts
+  if (body.email !== undefined) {
+    return c.json({ error: 'Email cannot be changed' }, 400);
+  }
+
   // Only admins may change roles
   if (body.role !== undefined && caller.role !== 'admin') {
     return c.json({ error: 'Forbidden: only admins can change roles' }, 403);
   }
 
-  const { valid, errors } = validateUserInput(body, !!body.password);
+  const { valid, errors } = validateUserInput(body, !!body.password, true);
   if (!valid) return c.json({ error: 'Validation failed', details: errors }, 400);
 
   // Verify user exists
@@ -216,8 +246,9 @@ users.put('/:id', requireAuth, async (c) => {
     const params: any[] = [body.name.trim(), now];
 
     if (body.password) {
-      query += ', password_hash = ?';
-      params.push(await hashPassword(body.password));
+      const { hash, salt } = await hashPassword(body.password);
+      query += ', password_hash = ?, password_salt = ?';
+      params.push(hash, salt);
     }
     if (body.role && caller.role === 'admin') {
       query += ', role = ?';
@@ -271,6 +302,11 @@ users.patch('/:id', requireAuth, async (c) => {
     return c.json({ error: 'No fields provided to update' }, 400);
   }
 
+  // Reject email change attempts
+  if (body.email !== undefined) {
+    return c.json({ error: 'Email cannot be changed' }, 400);
+  }
+
   if (body.role !== undefined && caller.role !== 'admin') {
     return c.json({ error: 'Forbidden: only admins can change roles' }, 403);
   }
@@ -291,7 +327,13 @@ users.patch('/:id', requireAuth, async (c) => {
   const params: any[] = [now];
 
   if (body.name) { setClauses.push('name = ?'); params.push(body.name.trim()); }
-  if (body.password) { setClauses.push('password_hash = ?'); params.push(await hashPassword(body.password)); }
+  if (body.password) {
+    const { hash, salt } = await hashPassword(body.password);
+    setClauses.push('password_hash = ?');
+    params.push(hash);
+    setClauses.push('password_salt = ?');
+    params.push(salt);
+  }
   if (body.role && caller.role === 'admin') { setClauses.push('role = ?'); params.push(body.role); }
   if (typeof body.active === 'boolean' && caller.role === 'admin') { setClauses.push('active = ?'); params.push(body.active ? 1 : 0); }
 
@@ -318,7 +360,7 @@ users.patch('/:id', requireAuth, async (c) => {
 });
 
 /**
- * DELETE /api/users/:id — Delete a user
+ * DELETE /api/users/:id — Soft-delete (deactivate) a user
  * Admin only.
  */
 users.delete('/:id', requireAuth, requireRole('admin'), async (c) => {
@@ -332,8 +374,11 @@ users.delete('/:id', requireAuth, requireRole('admin'), async (c) => {
   if (!existing) return c.json({ error: 'User not found' }, 404);
 
   try {
-    await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
-    return c.json({ message: 'User deleted successfully' });
+    await db
+      .prepare('UPDATE users SET active = 0, updated_at = ? WHERE id = ?')
+      .bind(getTimestamp(), id)
+      .run();
+    return c.json({ message: 'User deactivated successfully' });
   } catch (err) {
     console.error('DELETE /api/users/:id error:', err);
     return c.json({ error: 'Internal Server Error' }, 500);
