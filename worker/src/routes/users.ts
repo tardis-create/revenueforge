@@ -58,11 +58,12 @@ function hexToBytes(hex: string): Uint8Array {
 
 function validateUserInput(
   data: any,
-  requirePassword = true
+  requirePassword = true,
+  skipEmailCheck = false
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!data.email || typeof data.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+  if (!skipEmailCheck && (!data.email || typeof data.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))) {
     errors.push('A valid email is required');
   }
 
@@ -228,7 +229,7 @@ users.put('/:id', requireAuth, async (c) => {
     return c.json({ error: 'Forbidden: only admins can change roles' }, 403);
   }
 
-  const { valid, errors } = validateUserInput(body, !!body.password);
+  const { valid, errors } = validateUserInput(body, !!body.password, true);
   if (!valid) return c.json({ error: 'Validation failed', details: errors }, 400);
 
   // Verify user exists
