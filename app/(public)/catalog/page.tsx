@@ -22,6 +22,19 @@ import {
 } from '@/app/components'
 
 const REQUEST_TIMEOUT = 15000 // 15 seconds
+const PAGE_SIZE = 9 // 3x3 grid
+
+interface PaginatedResponse {
+  success: boolean
+  data?: Product[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  error?: string
+}
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -33,6 +46,11 @@ export default function CatalogPage() {
     category: '',
     industry: '',
   })
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState<{
+    total: number
+    totalPages: number
+  } | null>(null)
   
   const isOnline = useOnlineStatus()
   const debouncedSearch = useDebounce(filters.search, 300)
@@ -48,6 +66,8 @@ export default function CatalogPage() {
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
       
       const params = new URLSearchParams()
+      params.append('page', String(page))
+      params.append('limit', String(PAGE_SIZE))
       if (debouncedSearch) params.append('search', debouncedSearch)
       if (filters.category) params.append('category', filters.category)
       if (filters.industry) params.append('industry', filters.industry)
@@ -62,10 +82,22 @@ export default function CatalogPage() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const data = await response.json() as { success: boolean; data?: Product[]; error?: string }
+      const data = await response.json() as PaginatedResponse
       
       if (data.success && data.data) {
         setProducts(data.data)
+        if (data.pagination) {
+          setPagination({
+            total: data.pagination.total,
+            totalPages: data.pagination.totalPages,
+          })
+        } else {
+          // Fallback if API doesn't return pagination info
+          setPagination({
+            total: data.data.length,
+            totalPages: 1,
+          })
+        }
       } else {
         setError(data.error || 'Failed to load products')
       }
@@ -78,11 +110,34 @@ export default function CatalogPage() {
     } finally {
       setLoading(false)
     }
+  }, [page, debouncedSearch, filters.category, filters.industry])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1)
   }, [debouncedSearch, filters.category, filters.industry])
 
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
+
+  // Pagination handlers
+  const goToPage = (newPage: number) => {
+    if (pagination && newPage >= 1 && newPage <= pagination.totalPages) {
+      setPage(newPage)
+      // Scroll to top of product grid
+      document.getElementById('main-content')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const goToNextPage = () => goToPage(page + 1)
+  const goToPrevPage = () => goToPage(page - 1)
+
+  // Clear filters and reset page
+  const handleClearFilters = () => {
+    setFilters({ search: '', category: '', industry: '' })
+    setPage(1)
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -193,7 +248,7 @@ export default function CatalogPage() {
                     <SpringButton 
                       variant="secondary" 
                       size="sm"
-                      onClick={() => setFilters({ search: '', category: '', industry: '' })}
+                      onClick={handleClearFilters}
                       className="w-full"
                       aria-label="Clear all filters"
                     >
@@ -234,12 +289,13 @@ export default function CatalogPage() {
               ) : products.length === 0 ? (
                 <NoResultsState 
                   hasFilters={!!(filters.search || filters.category || filters.industry)}
-                  onClearFilters={() => setFilters({ search: '', category: '', industry: '' })}
+                  onClearFilters={handleClearFilters}
                 />
               ) : (
                 <>
                   <div className="mb-6 text-sm text-zinc-500" role="status" aria-live="polite">
-                    Showing {products.length} product{products.length !== 1 ? 's' : ''}
+                    Showing {products.length} of {pagination?.total || products.length} product{(pagination?.total || products.length) !== 1 ? 's' : ''}
+                    {pagination && pagination.totalPages > 1 && ` (page ${page} of ${pagination.totalPages})`}
                     {debouncedSearch && ` for "${debouncedSearch}"`}
                     {filters.category && ` in ${filters.category}`}
                     {filters.industry && ` for ${filters.industry}`}
@@ -255,6 +311,17 @@ export default function CatalogPage() {
                       ))}
                     </StaggerContainer>
                   </ul>
+                  
+                  {/* Pagination Controls */}
+                  {pagination && pagination.totalPages > 1 && (
+                    <PaginationControls
+                      currentPage={page}
+                      totalPages={pagination.totalPages}
+                      onPrev={goToPrevPage}
+                      onNext={goToNextPage}
+                      onPageSelect={goToPage}
+                    />
+                  )}
                 </>
               )}
             </main>
@@ -262,6 +329,125 @@ export default function CatalogPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Pagination Controls Component
+function PaginationControls({
+  currentPage,
+  totalPages,
+  onPrev,
+  onNext,
+  onPageSelect,
+}: {
+  currentPage: number
+  totalPages: number
+  onPrev: () => void
+  onNext: () => void
+  onPageSelect: (page: number) => void
+}) {
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = []
+    const showEllipsis = totalPages > 7
+    
+    if (!showEllipsis) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Always show first page
+      pages.push(1)
+      
+      if (currentPage <= 3) {
+        // Near start: 1, 2, 3, 4, 5, ..., last
+        for (let i = 2; i <= 5; i++) {
+          pages.push(i)
+        }
+        pages.push('ellipsis')
+        pages.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        // Near end: 1, ..., last-4, last-3, last-2, last-1, last
+        pages.push('ellipsis')
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i)
+        }
+      } else {
+        // Middle: 1, ..., current-1, current, current+1, ..., last
+        pages.push('ellipsis')
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i)
+        }
+        pages.push('ellipsis')
+        pages.push(totalPages)
+      }
+    }
+    
+    return pages
+  }
+
+  return (
+    <nav 
+      className="mt-10 flex items-center justify-center gap-2" 
+      role="navigation" 
+      aria-label="Pagination"
+    >
+      {/* Previous Button */}
+      <button
+        onClick={onPrev}
+        disabled={currentPage === 1}
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-zinc-400 bg-zinc-800/50 border border-zinc-700/50 rounded-lg hover:bg-zinc-700/50 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+        aria-label="Go to previous page"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="hidden sm:inline">Previous</span>
+      </button>
+
+      {/* Page Numbers */}
+      <div className="flex items-center gap-1">
+        {getPageNumbers().map((page, index) => (
+          page === 'ellipsis' ? (
+            <span 
+              key={`ellipsis-${index}`} 
+              className="px-2 py-2 text-zinc-500"
+              aria-hidden="true"
+            >
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              onClick={() => onPageSelect(page)}
+              className={`min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 ${
+                currentPage === page
+                  ? 'bg-purple-600 text-white'
+                  : 'text-zinc-400 bg-zinc-800/50 border border-zinc-700/50 hover:bg-zinc-700/50 hover:text-zinc-100'
+              }`}
+              aria-label={`Go to page ${page}`}
+              aria-current={currentPage === page ? 'page' : undefined}
+            >
+              {page}
+            </button>
+          )
+        ))}
+      </div>
+
+      {/* Next Button */}
+      <button
+        onClick={onNext}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-zinc-400 bg-zinc-800/50 border border-zinc-700/50 rounded-lg hover:bg-zinc-700/50 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+        aria-label="Go to next page"
+      >
+        <span className="hidden sm:inline">Next</span>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </nav>
   )
 }
 
