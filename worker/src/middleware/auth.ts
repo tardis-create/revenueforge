@@ -13,36 +13,37 @@ declare module 'hono' {
 
 /**
  * Extract and verify JWT token from Authorization header
+ * Also exported as requireAuth for semantic clarity.
  */
 export async function authMiddleware(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization');
-  
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({ error: 'Unauthorized: No token provided' }, 401);
   }
-  
+
   const token = authHeader.substring(7);
-  
+
   try {
     const secret = c.env?.JWT_SECRET || 'default-secret-change-in-production';
     const secretKey = new TextEncoder().encode(secret);
-    
+
     const { payload } = await jwtVerify(token, secretKey);
-    
+
     // Verify the payload has required fields
     if (!payload.userId || !payload.email || !payload.role) {
       return c.json({ error: 'Invalid token payload' }, 401);
     }
-    
+
     // Set user in context
     c.set('user', {
       userId: payload.userId as string,
       email: payload.email as string,
       role: payload.role as 'admin' | 'dealer' | 'viewer',
       iat: payload.iat,
-      exp: payload.exp
+      exp: payload.exp,
     });
-    
+
     await next();
   } catch (error) {
     console.error('JWT verification error:', error);
@@ -50,16 +51,45 @@ export async function authMiddleware(c: Context, next: Next) {
   }
 }
 
+/** Alias for semantic clarity */
+export const requireAuth = authMiddleware;
+
 /**
- * Require admin role
+ * Middleware factory: require one of the given roles.
+ *
+ * Usage:
+ *   app.get('/admin-only', requireAuth, requireRole('admin'), handler)
+ *   app.get('/staff',      requireAuth, requireRole('admin', 'dealer'), handler)
+ */
+export function requireRole(...roles: Array<'admin' | 'dealer' | 'viewer'>) {
+  return async function roleMiddleware(c: Context, next: Next) {
+    const user = c.get('user');
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    if (!roles.includes(user.role)) {
+      return c.json(
+        { error: `Forbidden: Requires one of [${roles.join(', ')}]` },
+        403
+      );
+    }
+
+    await next();
+  };
+}
+
+/**
+ * Require admin role (convenience shorthand)
  */
 export async function requireAdmin(c: Context, next: Next) {
   const user = c.get('user');
-  
+
   if (!user || user.role !== 'admin') {
     return c.json({ error: 'Forbidden: Admin access required' }, 403);
   }
-  
+
   await next();
 }
 
