@@ -119,7 +119,7 @@ dealers.get('/', requireAdmin, async (c) => {
 });
 
 /**
- * GET /api/dealers/:id - Get single dealer
+ * GET /api/dealers/:id - Get single dealer with embedded leads and commissions
  */
 dealers.get('/:id', requireAdmin, async (c) => {
   try {
@@ -127,7 +127,32 @@ dealers.get('/:id', requireAdmin, async (c) => {
     const id = c.req.param('id');
     const dealer = await db.prepare('SELECT * FROM dealers WHERE id = ?').bind(id).first();
     if (!dealer) return c.json({ error: 'Dealer not found' }, 404);
-    return c.json({ data: dealer });
+
+    // Embed assigned leads
+    let leads: any[] = [];
+    try {
+      const leadsResult = await db
+        .prepare('SELECT * FROM leads WHERE dealer_id = ? ORDER BY created_at DESC')
+        .bind(id)
+        .all();
+      leads = leadsResult.results as any[];
+    } catch (_e) {
+      // leads table missing dealer_id column or doesn't exist yet
+    }
+
+    // Embed commissions
+    let commissions: any[] = [];
+    try {
+      const commissionsResult = await db
+        .prepare('SELECT * FROM commissions WHERE dealer_id = ? ORDER BY created_at DESC')
+        .bind(id)
+        .all();
+      commissions = commissionsResult.results as any[];
+    } catch (_e) {
+      // commissions table doesn't exist yet
+    }
+
+    return c.json({ data: { ...dealer, leads, commissions } });
   } catch (err) {
     console.error('GET /api/dealers/:id error:', err);
     return c.json({ error: 'Failed to fetch dealer' }, 500);
@@ -179,7 +204,7 @@ dealers.post('/', requireAdmin, async (c) => {
 });
 
 /**
- * PUT /api/dealers/:id - Update dealer (admin only)
+ * PUT /api/dealers/:id - Full update dealer (admin only)
  */
 dealers.put('/:id', requireAdmin, async (c) => {
   try {
@@ -227,7 +252,55 @@ dealers.put('/:id', requireAdmin, async (c) => {
 });
 
 /**
- * DELETE /api/dealers/:id - Delete dealer (admin only)
+ * PATCH /api/dealers/:id - Partial update dealer (admin only)
+ */
+dealers.patch('/:id', requireAdmin, async (c) => {
+  try {
+    const db = c.env.DB;
+    const id = c.req.param('id');
+    const body = await c.req.json();
+
+    const existing = await db.prepare('SELECT * FROM dealers WHERE id = ?').bind(id).first();
+    if (!existing) return c.json({ error: 'Dealer not found' }, 404);
+
+    const { valid, errors } = validateDealerInput(body, true);
+    if (!valid) return c.json({ error: 'Validation failed', details: errors }, 422);
+
+    const now = getTimestamp();
+    const merged = { ...existing, ...body, id, updated_at: now };
+
+    await db
+      .prepare(
+        `UPDATE dealers SET name=?, email=?, phone=?, company=?, region=?, status=?, commission_rate=?, notes=?, updated_at=?
+         WHERE id=?`
+      )
+      .bind(
+        merged.name,
+        typeof merged.email === 'string' ? merged.email.toLowerCase() : merged.email,
+        merged.phone ?? null,
+        merged.company ?? null,
+        merged.region ?? null,
+        merged.status,
+        parseFloat(merged.commission_rate ?? 0),
+        merged.notes ?? null,
+        now,
+        id
+      )
+      .run();
+
+    const dealer = await db.prepare('SELECT * FROM dealers WHERE id = ?').bind(id).first();
+    return c.json({ data: dealer });
+  } catch (err: any) {
+    if (err?.message?.includes('UNIQUE')) {
+      return c.json({ error: 'A dealer with this email already exists' }, 409);
+    }
+    console.error('PATCH /api/dealers/:id error:', err);
+    return c.json({ error: 'Failed to update dealer' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/dealers/:id - Soft-delete dealer by setting status='inactive' (admin only)
  */
 dealers.delete('/:id', requireAdmin, async (c) => {
   try {
@@ -236,11 +309,16 @@ dealers.delete('/:id', requireAdmin, async (c) => {
     const existing = await db.prepare('SELECT id FROM dealers WHERE id = ?').bind(id).first();
     if (!existing) return c.json({ error: 'Dealer not found' }, 404);
 
-    await db.prepare('DELETE FROM dealers WHERE id = ?').bind(id).run();
-    return c.json({ message: 'Dealer deleted successfully' });
+    const now = getTimestamp();
+    await db
+      .prepare("UPDATE dealers SET status='inactive', updated_at=? WHERE id=?")
+      .bind(now, id)
+      .run();
+
+    return c.json({ message: 'Dealer deactivated successfully' });
   } catch (err) {
     console.error('DELETE /api/dealers/:id error:', err);
-    return c.json({ error: 'Failed to delete dealer' }, 500);
+    return c.json({ error: 'Failed to deactivate dealer' }, 500);
   }
 });
 
@@ -261,7 +339,6 @@ dealers.get('/:id/leads', requireAdmin, async (c) => {
     const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20')));
     const offset = (page - 1) * limit;
 
-    // Try to fetch leads — table may not have dealer_id column yet
     let leads: any[] = [];
     let total = 0;
     try {
@@ -408,13 +485,8 @@ dealers.put('/:id/commissions/:commissionId', requireAdmin, async (c) => {
     const now = getTimestamp();
     const merged = { ...existing, ...body };
 
-    // If status changes to 'paid', auto-set paid_at
-    const paidAt =
-      merged.status === 'paid'
-        ? merged.paid_at || now
-        : merged.status !== 'paid'
-        ? null
-        : merged.paid_at;
+    // If status is 'paid', auto-set paid_at; otherwise clear it
+    const paidAt = merged.status === 'paid' ? (merged.paid_at || now) : null;
 
     await db
       .prepare(
