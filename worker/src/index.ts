@@ -2,11 +2,13 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import products from './routes/products';
+import auditLogs from './routes/auditLogs';
 import templates from './routes/templates';
 import users from './routes/users';
 import analytics from './routes/analytics';
 import dealers from './routes/dealers';
 import upload from './routes/upload';
+import leads from './routes/leads';
 
 // Create Hono app
 const app = new Hono();
@@ -26,6 +28,7 @@ app.get('/', (c) => {
     version: '1.0.0',
     endpoints: {
       products: '/api/products',
+      leads: '/api/leads',
       health: '/health'
     }
   });
@@ -37,6 +40,12 @@ app.get('/health', (c) => {
 
 // Mount product routes under /api/products
 app.route('/api/products', products);
+
+// Mount leads routes under /api/leads
+app.route('/api/leads', leads);
+
+// Mount audit log routes under /api/audit-logs
+app.route('/api/audit-logs', auditLogs);
 
 // Mount email template routes under /api/templates
 app.route('/api/templates', templates);
