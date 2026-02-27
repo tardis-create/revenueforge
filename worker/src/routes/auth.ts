@@ -52,7 +52,7 @@ auth.post('/login', async (c) => {
       ['deriveBits']
     );
     const derivedBits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt: saltBytes, iterations: 310000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt: saltBytes as BufferSource, iterations: 310000, hash: 'SHA-256' },
       keyMaterial,
       256
     );
