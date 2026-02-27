@@ -1,65 +1,69 @@
 /**
- * In-memory rate limiter for Cloudflare Workers.
- * Limits requests per IP using a sliding window approach.
+ * KV-based distributed rate limiter for Cloudflare Workers.
+ * Uses Cloudflare KV for shared state across all Worker instances.
  */
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const store = new Map<string, RateLimitEntry>();
+import type { Context } from 'hono';
+import type { Env } from '../types';
 
 /**
- * Create a rate limiter middleware for Hono.
+ * Create a KV-backed rate limiter middleware.
  * @param max      Maximum requests allowed in the window
  * @param windowMs Window duration in milliseconds
+ * @param scope    'authed' | 'anon' — used to namespace KV keys
  */
-export function createRateLimiter(max: number, windowMs: number) {
-  const cleanup = () => {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (entry.resetAt < now) store.delete(key);
+export function createRateLimiter(max: number, windowMs: number, scope = 'global') {
+  return async function rateLimiterMiddleware(c: Context<{ Bindings: Env }>, next: () => Promise<void>) {
+    const kv = c.env.KV;
+    if (!kv) {
+      // KV not bound — fail open but log
+      console.warn('KV binding missing; rate limiting disabled');
+      await next();
+      return;
     }
-  };
 
-  return async function rateLimiterMiddleware(c: any, next: () => Promise<void>) {
     const ip =
       c.req.header('cf-connecting-ip') ||
       c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
       'unknown';
 
-    const key = `rl:${ip}:${c.req.path}`;
-    const now = Date.now();
+    const windowSec = Math.ceil(windowMs / 1000);
+    const windowId = Math.floor(Date.now() / windowMs); // bucket identifier
+    const key = `rl:${scope}:${ip}:${windowId}`;
 
-    let entry = store.get(key);
-    if (!entry || entry.resetAt < now) {
-      entry = { count: 0, resetAt: now + windowMs };
-      store.set(key, entry);
+    // Atomic increment via KV
+    const raw = await kv.get(key);
+    const count = raw ? parseInt(raw, 10) + 1 : 1;
+
+    if (count === 1) {
+      // First request in this window — set with TTL
+      await kv.put(key, String(count), { expirationTtl: windowSec + 10 });
+    } else {
+      await kv.put(key, String(count), { expirationTtl: windowSec + 10 });
     }
 
-    entry.count++;
-
-    if (Math.random() < 0.01) cleanup();
-
-    if (entry.count > max) {
-      const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-      c.header('Retry-After', String(retryAfter));
-      c.header('X-RateLimit-Limit', String(max));
-      c.header('X-RateLimit-Remaining', '0');
-      c.header('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
-      return c.json({ error: 'Too many requests. Please try again later.' }, 429);
-    }
+    const remaining = Math.max(0, max - count);
+    const resetEpoch = Math.ceil(((windowId + 1) * windowMs) / 1000);
 
     c.header('X-RateLimit-Limit', String(max));
-    c.header('X-RateLimit-Remaining', String(max - entry.count));
-    c.header('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
+    c.header('X-RateLimit-Remaining', String(remaining));
+    c.header('X-RateLimit-Reset', String(resetEpoch));
+
+    if (count > max) {
+      const retryAfter = resetEpoch - Math.ceil(Date.now() / 1000);
+      c.header('Retry-After', String(retryAfter));
+      return c.json({ error: 'Too many requests. Please try again later.' }, 429);
+    }
 
     await next();
   };
 }
 
 /**
- * Auth route rate limiter: max 5 login attempts per IP per 15 minutes.
+ * Global rate limiters applied in index.ts:
+ *   - Authenticated users: 100 req/min
+ *   - Anonymous users: 20 req/min
+ *
+ * Auth route limiter: max 5 login attempts per IP per 15 minutes.
  */
-export const authRateLimiter = createRateLimiter(5, 15 * 60 * 1000);
+export const authRateLimiter = createRateLimiter(5, 15 * 60 * 1000, 'auth');

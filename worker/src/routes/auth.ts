@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { logAction } from '../utils/auditLog';
 import { authRateLimiter } from '../middleware/rateLimiter';
 import { stripHtml } from '../utils/sanitize';
+import { LoginSchema, validate } from '../schemas';
 import type { Env } from '../types';
 
 const auth = new Hono<{ Bindings: Env }>();
@@ -26,13 +27,15 @@ auth.post('/login', authRateLimiter, async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  // Sanitize: strip HTML from text fields
-  const email = stripHtml(String(body.email ?? '')).toLowerCase();
-  const password = String(body.password ?? '');
-
-  if (!email || !password) {
-    return c.json({ error: 'Email and password are required' }, 400);
+  // Zod validation
+  const validation = validate(LoginSchema, body);
+  if ('error' in validation) {
+    return c.json(validation, 400);
   }
+
+  // Sanitize: strip HTML from text fields
+  const email = stripHtml(validation.data.email).toLowerCase();
+  const password = validation.data.password;
 
   try {
     const user = await db
@@ -73,7 +76,7 @@ auth.post('/login', authRateLimiter, async (c) => {
       return c.json({ error: 'Invalid credentials' }, 401);
     }
 
-    const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'default-secret-change-in-production');
+    const secret = new TextEncoder().encode(c.env.JWT_SECRET); // JWT_SECRET is guaranteed non-null by global middleware guard
     const token = await new SignJWT({ userId: user.id, email: user.email, role: user.role })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()

@@ -25,7 +25,7 @@ export async function authMiddleware(c: Context, next: Next) {
   const token = authHeader.substring(7);
 
   try {
-    const secret = c.env?.JWT_SECRET || 'default-secret-change-in-production';
+    const secret = c.env.JWT_SECRET; // guaranteed non-null by global startup guard
     const secretKey = new TextEncoder().encode(secret);
 
     const { payload } = await jwtVerify(token, secretKey);

@@ -22,3 +22,8 @@ bucket_name = "revenueforge-uploads"
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
+
+# KV namespace for distributed rate limiting
+[[kv_namespaces]]
+binding = "KV"
+id = "abf6f10d63e4485e94d8f5b8c4408fec"
