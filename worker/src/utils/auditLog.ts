@@ -2,9 +2,33 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { Env } from '../types';
 import { getTimestamp } from '../db';
 
-/**
- * Generate a simple random ID for audit log entries.
- */
+export type AuditAction =
+  | 'create'
+  | 'read'
+  | 'update'
+  | 'delete'
+  | 'login'
+  | 'logout'
+  | 'export'
+  | 'import'
+  | 'approve'
+  | 'reject'
+  | 'assign'
+  | 'unassign'
+  | 'api_call';
+
+export interface AuditLogEntry {
+  id?: string;
+  user_id?: string;
+  action: AuditAction;
+  resource_type: string;
+  resource_id?: string;
+  details?: Record<string, unknown> | string;
+  ip_address?: string;
+  user_agent?: string;
+  timestamp?: string;
+}
+
 function generateAuditId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let id = 'aud_';
@@ -16,8 +40,7 @@ function generateAuditId(): string {
 
 /**
  * Log an auditable action to the audit_logs table.
- * Fire-and-forget: errors are logged to console but NOT thrown,
- * so they never interrupt the caller.
+ * Fire-and-forget: errors are logged to console but NOT thrown.
  */
 export async function logAction(
   env: Env,
