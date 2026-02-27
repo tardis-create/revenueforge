@@ -7,6 +7,7 @@ import templates from './routes/templates';
 import users from './routes/users';
 import analytics from './routes/analytics';
 import dealers from './routes/dealers';
+import leads from './routes/leads';
 
 // Create Hono app
 const app = new Hono();
@@ -26,6 +27,7 @@ app.get('/', (c) => {
     version: '1.0.0',
     endpoints: {
       products: '/api/products',
+      leads: '/api/leads',
       health: '/health'
     }
   });
@@ -37,6 +39,9 @@ app.get('/health', (c) => {
 
 // Mount product routes under /api/products
 app.route('/api/products', products);
+
+// Mount leads routes under /api/leads
+app.route('/api/leads', leads);
 
 // Mount audit log routes under /api/audit-logs
 app.route('/api/audit-logs', auditLogs);
