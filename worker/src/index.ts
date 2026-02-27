@@ -6,6 +6,7 @@ import templates from './routes/templates';
 import users from './routes/users';
 import analytics from './routes/analytics';
 import dealers from './routes/dealers';
+import upload from './routes/upload';
 
 // Create Hono app
 const app = new Hono();
@@ -48,6 +49,9 @@ app.route('/api/analytics', analytics);
 
 // Mount dealer routes under /api/dealers
 app.route('/api/dealers', dealers);
+
+// Mount upload routes under /api/upload
+app.route('/api/upload', upload);
 
 // 404 handler
 app.notFound((c) => {
