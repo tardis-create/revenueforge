@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && cp \".next/server/app/page_client-reference-manifest.js\" \".next/server/app/(admin)/page_client-reference-manifest.js\" 2>/dev/null || true",
     "start": "next start",
     "lint": "eslint"
   },
