@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import products from './routes/products';
 import templates from './routes/templates';
+import dealers from './routes/dealers';
 
 // Create Hono app
 const app = new Hono();
@@ -36,6 +37,9 @@ app.route('/api/products', products);
 
 // Mount email template routes under /api/templates
 app.route('/api/templates', templates);
+
+// Mount dealer routes under /api/dealers
+app.route('/api/dealers', dealers);
 
 // 404 handler
 app.notFound((c) => {
