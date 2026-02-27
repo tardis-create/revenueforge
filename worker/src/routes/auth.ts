@@ -2,14 +2,22 @@ import { Hono } from 'hono';
 import { SignJWT } from 'jose';
 import { requireAuth } from '../middleware/auth';
 import { logAction } from '../utils/auditLog';
+import { authRateLimiter } from '../middleware/rateLimiter';
+import { stripHtml } from '../utils/sanitize';
+import { LoginSchema, validate } from '../schemas';
 import type { Env } from '../types';
 
 const auth = new Hono<{ Bindings: Env }>();
 
+function getTimestamp(): string {
+  return new Date().toISOString();
+}
+
 /**
  * POST /api/auth/login — Authenticate user, return JWT.
+ * Rate limited: max 5 attempts per IP per 15 minutes.
  */
-auth.post('/login', async (c) => {
+auth.post('/login', authRateLimiter, async (c) => {
   const db = c.env.DB;
 
   let body: any;
@@ -19,15 +27,20 @@ auth.post('/login', async (c) => {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { email, password } = body;
-  if (!email || !password) {
-    return c.json({ error: 'Email and password are required' }, 400);
+  // Zod validation
+  const validation = validate(LoginSchema, body);
+  if ('error' in validation) {
+    return c.json(validation, 400);
   }
+
+  // Sanitize: strip HTML from text fields
+  const email = stripHtml(validation.data.email).toLowerCase();
+  const password = validation.data.password;
 
   try {
     const user = await db
       .prepare('SELECT id, email, name, role, active, password_hash, password_salt FROM users WHERE email = ?')
-      .bind(email.toLowerCase())
+      .bind(email)
       .first<{
         id: string;
         email: string;
@@ -52,39 +65,33 @@ auth.post('/login', async (c) => {
       ['deriveBits']
     );
     const derivedBits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt: saltBytes as BufferSource, iterations: 310000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt: saltBytes, iterations: 310000, hash: 'SHA-256' },
       keyMaterial,
       256
     );
     const hash = bytesToHex(new Uint8Array(derivedBits));
 
     if (hash !== user.password_hash) {
-      await logAction(db, {
-        user_id: user.id,
-        action: 'login',
-        resource_type: 'auth',
-        details: { success: false, reason: 'wrong_password' },
-        ip_address: c.req.header('cf-connecting-ip') ?? undefined,
-        user_agent: c.req.header('user-agent') ?? undefined,
-      });
+      await logAction(c.env, db, user.id, 'login', 'auth', null, { success: false, reason: 'wrong_password' });
       return c.json({ error: 'Invalid credentials' }, 401);
     }
 
-    const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'default-secret-change-in-production');
+    const secret = new TextEncoder().encode(c.env.JWT_SECRET); // JWT_SECRET is guaranteed non-null by global middleware guard
     const token = await new SignJWT({ userId: user.id, email: user.email, role: user.role })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('24h')
       .sign(secret);
 
-    await logAction(db, {
-      user_id: user.id,
-      action: 'login',
-      resource_type: 'auth',
-      details: { success: true },
-      ip_address: c.req.header('cf-connecting-ip') ?? undefined,
-      user_agent: c.req.header('user-agent') ?? undefined,
-    });
+    // Update last_login timestamp
+    const now = getTimestamp();
+    await db
+      .prepare('UPDATE users SET last_login = ? WHERE id = ?')
+      .bind(now, user.id)
+      .run()
+      .catch(() => {});
+
+    await logAction(c.env, db, user.id, 'login', 'auth', null, { success: true });
 
     return c.json({
       token,
@@ -104,17 +111,9 @@ auth.post('/logout', requireAuth, async (c) => {
   const caller = c.get('user');
 
   try {
-    await logAction(db, {
-      user_id: caller.userId,
-      action: 'logout',
-      resource_type: 'auth',
-      details: { email: caller.email },
-      ip_address: c.req.header('cf-connecting-ip') ?? undefined,
-      user_agent: c.req.header('user-agent') ?? undefined,
-    });
+    await logAction(c.env, db, caller.userId, 'logout', 'auth', null, { email: caller.email });
   } catch (err) {
     console.error('Audit log error on logout:', err);
-    // Non-blocking: still return success
   }
 
   return c.json({ message: 'Logged out successfully' });
