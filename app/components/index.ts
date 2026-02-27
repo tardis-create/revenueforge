@@ -22,7 +22,7 @@ export {
   FormActions
 } from "./FormError"
 
-// React Bits replacements
+// React Bits components
 export { BlurText } from "./BlurText"
 export { AnimatedContent } from "./AnimatedContent"
 export { FadeContent } from "./FadeContent"
@@ -31,3 +31,18 @@ export { GlareHover } from "./GlareHover"
 export { SpotlightCard } from "./SpotlightCard"
 export { Magnet } from "./Magnet"
 export { ClickSpark } from "./ClickSpark"
+
+// New Nidavellir UI components
+export { ShinyText } from "./ShinyText"
+export { GradientText } from "./GradientText"
+export { SplitText } from "./SplitText"
+export { AnimatedList } from "./AnimatedList"
+export { DecryptedText } from "./DecryptedText"
+export { RotatingText } from "./RotatingText"
+export { StarBorder } from "./StarBorder"
+export { Ripple } from "./Ripple"
+export { AnimatedBeam } from "./AnimatedBeam"
+export { ScrollReveal } from "./ScrollReveal"
+export { MorphingBackground } from "./MorphingBackground"
+export { GlowEffect } from "./GlowEffect"
+export { TiltCard } from "./TiltCard"

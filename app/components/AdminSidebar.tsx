@@ -79,14 +79,15 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onToggle}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
       <motion.aside
-        initial={{ x: -280 }}
+        initial={false}
         animate={{ x: isOpen ? 0 : -280 }}
         transition={{
           type: "spring",
@@ -96,24 +97,25 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         className={`
           fixed top-0 left-0 h-full w-[280px] z-50
           bg-zinc-900/95 backdrop-blur-lg border-r border-zinc-800/50
-          lg:translate-x-0 lg:static lg:z-auto
-          ${isOpen ? 'lg:translate-x-0' : 'lg:translate-x-0'}
+          lg:translate-x-0 lg:static lg:z-auto lg:w-64
         `}
+        role="navigation"
+        aria-label="Admin navigation"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-6 py-6 border-b border-zinc-800/50">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-5 border-b border-zinc-800/50">
+            <Link href="/" className="flex items-center gap-2 min-h-[44px]">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-sm">R</span>
               </div>
-              <span className="font-semibold text-lg text-zinc-100">RevenueForge</span>
+              <span className="font-semibold text-lg text-zinc-100 truncate">RevenueForge</span>
             </Link>
             
             {/* Close button for mobile */}
             <button
               onClick={onToggle}
-              className="lg:hidden p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="lg:hidden p-2.5 rounded-lg hover:bg-zinc-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Close sidebar"
             >
               <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,8 +125,8 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <p className="px-3 mb-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Admin menu">
+            <p className="px-3 mb-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
               Admin Menu
             </p>
             
@@ -135,23 +137,22 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
               return (
                 <Link key={item.href} href={item.href}>
                   <motion.div
-                    whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                     className={`
                       flex items-center gap-3 px-3 py-3 rounded-lg
-                      transition-all cursor-pointer
+                      transition-all cursor-pointer min-h-[44px]
                       ${isActive 
                         ? "bg-purple-500/10 text-purple-400 border-l-2 border-purple-500" 
                         : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"}
                     `}
                   >
-                    {item.icon}
-                    <span className="font-medium">{item.label}</span>
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    <span className="font-medium truncate">{item.label}</span>
                     
                     {isActive && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500"
+                        className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0"
                       />
                     )}
                   </motion.div>
@@ -161,28 +162,28 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="px-4 py-4 border-t border-zinc-800/50">
+          <div className="px-3 py-4 border-t border-zinc-800/50">
             <Link href="/">
               <motion.div
-                whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex items-center gap-3 px-3 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all cursor-pointer"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all cursor-pointer min-h-[44px]"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                 </svg>
-                <span className="font-medium">Back to Site</span>
+                <span className="font-medium truncate">Back to Site</span>
               </motion.div>
             </Link>
           </div>
         </div>
       </motion.aside>
 
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger button - fixed position for easy access */}
       <button
         onClick={onToggle}
-        className="fixed top-4 left-4 z-30 lg:hidden p-2 rounded-lg bg-zinc-900/90 backdrop-blur border border-zinc-800/50"
-        aria-label="Open sidebar"
+        className="fixed top-4 left-4 z-30 lg:hidden p-2.5 rounded-xl bg-zinc-900/90 backdrop-blur border border-zinc-800/50 shadow-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Open navigation menu"
+        aria-expanded={isOpen}
       >
         <svg className="w-6 h-6 text-zinc-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
