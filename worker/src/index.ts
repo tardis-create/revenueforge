@@ -5,6 +5,8 @@ import products from './routes/products';
 import templates from './routes/templates';
 import users from './routes/users';
 import upload from './routes/upload';
+import auditLog from './routes/auditLog';
+import auth from './routes/auth';
 
 // Create Hono app
 const app = new Hono();
@@ -44,6 +46,8 @@ app.route('/api/users', users);
 
 // Mount upload routes under /api/upload
 app.route('/api/upload', upload);
+app.route('/api/audit-log', auditLog);
+app.route('/api/auth', auth);
 
 // 404 handler
 app.notFound((c) => {

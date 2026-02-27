@@ -1,41 +1,70 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { Product } from '@/lib/types'
+import { API_BASE_URL } from '@/lib/api'
 import { 
   BlurText, 
   AnimatedContent, 
   FadeContent,
   Magnet,
   ClickSpark,
-  GlareHover
+  GlareHover,
+  SpringButton
 } from '@/app/components'
 
 interface Quote {
   id: string
-  rfq_id: string
+  rfq_id: string | null
   company_name: string
   contact_person: string
   email: string
+  phone: string
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired'
+  subtotal: number
+  tax_rate: number
+  tax_amount: number
   total_amount: number
   valid_until: string
   created_at: string
+  terms: string
+  notes: string
   items: QuoteItem[]
 }
 
 interface QuoteItem {
   id: string
+  product_id: string
   product_name: string
   quantity: number
   unit_price: number
+  discount_percent: number
+  discount_amount: number
   total: number
 }
+
+interface RFQ {
+  id: string
+  company_name: string
+  contact_person: string
+  email: string
+  phone: string
+  status: string
+  created_at: string
+}
+
+const DEFAULT_TERMS = \`1. Prices are valid for 30 days from the quote date.
+2. Payment terms: Net 30 days from invoice date.
+3. Delivery: Within 2-4 weeks from order confirmation.
+4. Warranty: 12 months from delivery date.
+5. Taxes: Applicable taxes extra unless mentioned otherwise.\`
 
 export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
     // Mock data - replace with API call
@@ -46,13 +75,19 @@ export default function QuotesPage() {
         company_name: 'TechCorp Industries',
         contact_person: 'Sarah Chen',
         email: 'sarah@techcorp.com',
+        phone: '+1-555-0123',
         status: 'sent',
-        total_amount: 24500,
+        subtotal: 23000,
+        tax_rate: 18,
+        tax_amount: 4140,
+        total_amount: 27140,
         valid_until: '2026-03-15',
         created_at: '2026-02-20',
+        terms: DEFAULT_TERMS,
+        notes: 'Customer requested expedited shipping.',
         items: [
-          { id: '1', product_name: 'Industrial Pump Assembly', quantity: 5, unit_price: 4500, total: 22500 },
-          { id: '2', product_name: 'Installation Kit', quantity: 5, unit_price: 400, total: 2000 },
+          { id: '1', product_id: 'p1', product_name: 'Industrial Pump Assembly', quantity: 5, unit_price: 4500, discount_percent: 0, discount_amount: 0, total: 22500 },
+          { id: '2', product_id: 'p2', product_name: 'Installation Kit', quantity: 5, unit_price: 400, discount_percent: 25, discount_amount: 100, total: 1500 },
         ]
       },
       {
@@ -61,27 +96,38 @@ export default function QuotesPage() {
         company_name: 'BuildRight Construction',
         contact_person: 'Mike Johnson',
         email: 'mike@buildright.com',
+        phone: '+1-555-0456',
         status: 'accepted',
-        total_amount: 18750,
+        subtotal: 17500,
+        tax_rate: 18,
+        tax_amount: 3150,
+        total_amount: 20650,
         valid_until: '2026-03-10',
         created_at: '2026-02-18',
+        terms: DEFAULT_TERMS,
+        notes: '',
         items: [
-          { id: '1', product_name: 'Heavy Duty Valve Set', quantity: 25, unit_price: 750, total: 18750 },
+          { id: '1', product_id: 'p3', product_name: 'Heavy Duty Valve Set', quantity: 25, unit_price: 750, discount_percent: 7, discount_amount: 52.5, total: 17500 },
         ]
       },
       {
         id: 'QT-003',
-        rfq_id: 'RFQ-2026-003',
+        rfq_id: null,
         company_name: 'AquaFlow Systems',
         contact_person: 'Linda Park',
         email: 'linda@aquaflow.com',
+        phone: '+1-555-0789',
         status: 'draft',
-        total_amount: 32000,
+        subtotal: 30000,
+        tax_rate: 18,
+        tax_amount: 5400,
+        total_amount: 35400,
         valid_until: '2026-03-20',
         created_at: '2026-02-25',
+        terms: DEFAULT_TERMS,
+        notes: 'Waiting for customer confirmation on specifications.',
         items: [
-          { id: '1', product_name: 'Centrifugal Pump System', quantity: 2, unit_price: 15000, total: 30000 },
-          { id: '2', product_name: 'Control Panel', quantity: 2, unit_price: 1000, total: 2000 },
+          { id: '1', product_id: 'p4', product_name: 'Centrifugal Pump System', quantity: 2, unit_price: 15000, discount_percent: 0, discount_amount: 0, total: 30000 },
         ]
       },
       {
@@ -90,12 +136,38 @@ export default function QuotesPage() {
         company_name: 'EnergyPlus Ltd',
         contact_person: 'David Kim',
         email: 'david@energyplus.com',
+        phone: '+1-555-0321',
         status: 'rejected',
-        total_amount: 8900,
+        subtotal: 8900,
+        tax_rate: 18,
+        tax_amount: 1602,
+        total_amount: 10502,
         valid_until: '2026-02-28',
         created_at: '2026-02-15',
+        terms: DEFAULT_TERMS,
+        notes: 'Customer chose a competitor due to price.',
         items: [
-          { id: '1', product_name: 'Motor Assembly Unit', quantity: 10, unit_price: 890, total: 8900 },
+          { id: '1', product_id: 'p5', product_name: 'Motor Assembly Unit', quantity: 10, unit_price: 890, discount_percent: 0, discount_amount: 0, total: 8900 },
+        ]
+      },
+      {
+        id: 'QT-005',
+        rfq_id: null,
+        company_name: 'Global Manufacturing Co',
+        contact_person: 'Emma Wilson',
+        email: 'emma@globalmfg.com',
+        phone: '+1-555-0654',
+        status: 'expired',
+        subtotal: 12000,
+        tax_rate: 18,
+        tax_amount: 2160,
+        total_amount: 14160,
+        valid_until: '2026-02-20',
+        created_at: '2026-02-01',
+        terms: DEFAULT_TERMS,
+        notes: 'Quote expired without response.',
+        items: [
+          { id: '1', product_id: 'p6', product_name: 'Control Panel Module', quantity: 4, unit_price: 3000, discount_percent: 0, discount_amount: 0, total: 12000 },
         ]
       },
     ]
@@ -107,6 +179,20 @@ export default function QuotesPage() {
   const filteredQuotes = filterStatus === 'all' 
     ? quotes 
     : quotes.filter(q => q.status === filterStatus)
+
+  const handleStatusChange = async (quoteId: string, newStatus: 'sent' | 'accepted' | 'rejected') => {
+    setQuotes(quotes.map(q => 
+      q.id === quoteId ? { ...q, status: newStatus } : q
+    ))
+    
+    if (selectedQuote?.id === quoteId) {
+      setSelectedQuote({ ...selectedQuote, status: newStatus })
+    }
+    
+    // In production, this would trigger an API call
+    // For 'sent' status, it would also trigger email
+    console.log(`Quote ${quoteId} status changed to ${newStatus}`)
+  }
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -162,11 +248,14 @@ export default function QuotesPage() {
             
             <AnimatedContent delay={0.1}>
               <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                <button className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all flex items-center gap-2">
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all flex items-center gap-2"
+                >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  New Quote
+                  Create Quote
                 </button>
               </ClickSpark>
             </AnimatedContent>
@@ -296,19 +385,40 @@ export default function QuotesPage() {
           <QuoteDetailModal
             quote={selectedQuote}
             onClose={() => setSelectedQuote(null)}
+            onStatusChange={handleStatusChange}
+          />
+        )}
+
+        {/* Create Quote Modal */}
+        {showCreateModal && (
+          <CreateQuoteModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={(newQuote) => {
+              setQuotes([...quotes, newQuote])
+              setShowCreateModal(false)
+            }}
           />
         )}
     </div>
   )
 }
 
-function QuoteDetailModal({ quote, onClose }: { quote: Quote; onClose: () => void }) {
+function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; onClose: () => void; onStatusChange: (id: string, status: 'sent' | 'accepted' | 'rejected') => void }) {
+  const [actionLoading, setActionLoading] = useState(false)
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const handleAction = async (action: 'sent' | 'accepted' | 'rejected') => {
+    setActionLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 500))
+    onStatusChange(quote.id, action)
+    setActionLoading(false)
   }
 
   return (
@@ -342,15 +452,31 @@ function QuoteDetailModal({ quote, onClose }: { quote: Quote; onClose: () => voi
             {/* Content */}
             <div className="p-6 space-y-6">
               {/* Customer Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-zinc-800/30 rounded-lg">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Company</div>
-                  <div className="text-sm font-medium text-zinc-100">{quote.company_name}</div>
-                </div>
-                <div className="p-4 bg-zinc-800/30 rounded-lg">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Contact</div>
-                  <div className="text-sm font-medium text-zinc-100">{quote.contact_person}</div>
-                  <div className="text-xs text-zinc-500">{quote.email}</div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-3">
+                  Customer Information
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-zinc-800/30 rounded-lg">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Company</div>
+                    <div className="text-sm font-medium text-zinc-100">{quote.company_name}</div>
+                  </div>
+                  <div className="p-4 bg-zinc-800/30 rounded-lg">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Contact</div>
+                    <div className="text-sm font-medium text-zinc-100">{quote.contact_person}</div>
+                  </div>
+                  <div className="p-4 bg-zinc-800/30 rounded-lg">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Email</div>
+                    <a href={`mailto:${quote.email}`} className="text-sm text-purple-400 hover:text-purple-300">
+                      {quote.email}
+                    </a>
+                  </div>
+                  <div className="p-4 bg-zinc-800/30 rounded-lg">
+                    <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Phone</div>
+                    <a href={`tel:${quote.phone}`} className="text-sm text-zinc-100">
+                      {quote.phone}
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -360,34 +486,76 @@ function QuoteDetailModal({ quote, onClose }: { quote: Quote; onClose: () => voi
                   Line Items
                 </h3>
                 <div className="bg-zinc-800/30 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-700/50">
-                        <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Product</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Qty</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Unit Price</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-700/50">
-                      {quote.items.map((item) => (
-                        <tr key={item.id}>
-                          <td className="px-4 py-3 text-sm text-zinc-100">{item.product_name}</td>
-                          <td className="px-4 py-3 text-sm text-zinc-400 text-right">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-zinc-400 text-right">{formatCurrency(item.unit_price)}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-zinc-100 text-right">{formatCurrency(item.total)}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-zinc-700/50">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Product</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Qty</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Unit Price</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Discount</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-zinc-700">
-                        <td colSpan={3} className="px-4 py-3 text-sm font-medium text-zinc-300 text-right">Total</td>
-                        <td className="px-4 py-3 text-lg font-bold text-zinc-100 text-right">{formatCurrency(quote.total_amount)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-700/50">
+                        {quote.items.map((item) => (
+                          <tr key={item.id}>
+                            <td className="px-4 py-3 text-sm text-zinc-100">{item.product_name}</td>
+                            <td className="px-4 py-3 text-sm text-zinc-400 text-right">{item.quantity}</td>
+                            <td className="px-4 py-3 text-sm text-zinc-400 text-right">{formatCurrency(item.unit_price)}</td>
+                            <td className="px-4 py-3 text-sm text-zinc-400 text-right">
+                              {item.discount_percent > 0 ? `${item.discount_percent}%` : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-zinc-100 text-right">{formatCurrency(item.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="mt-4 flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-500">Subtotal</span>
+                      <span className="text-zinc-300">{formatCurrency(quote.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-500">Tax ({quote.tax_rate}%)</span>
+                      <span className="text-zinc-300">{formatCurrency(quote.tax_amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-700">
+                      <span className="text-zinc-100">Total</span>
+                      <span className="text-zinc-100">{formatCurrency(quote.total_amount)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Terms */}
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-3">
+                  Terms &amp; Conditions
+                </h3>
+                <div className="p-4 bg-zinc-800/30 rounded-lg">
+                  <pre className="text-sm text-zinc-400 whitespace-pre-wrap font-sans">
+                    {quote.terms}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {quote.notes && (
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-100 uppercase tracking-wider mb-3">
+                    Notes
+                  </h3>
+                  <div className="p-4 bg-zinc-800/30 rounded-lg">
+                    <p className="text-sm text-zinc-400">{quote.notes}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
@@ -403,7 +571,46 @@ function QuoteDetailModal({ quote, onClose }: { quote: Quote; onClose: () => voi
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex justify-end gap-3">
+            <div className="sticky bottom-0 px-6 py-4 bg-zinc-800/30 rounded-b-2xl flex flex-wrap justify-end gap-3 border-t border-zinc-800">
+              {quote.status === 'draft' && (
+                <SpringButton
+                  variant="primary"
+                  onClick={() => handleAction('sent')}
+                  disabled={actionLoading}
+                  className="flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {actionLoading ? 'Sending...' : 'Send to Customer'}
+                </SpringButton>
+              )}
+              {quote.status === 'sent' && (
+                <>
+                  <SpringButton
+                    variant="secondary"
+                    onClick={() => handleAction('rejected')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Mark Rejected
+                  </SpringButton>
+                  <SpringButton
+                    variant="primary"
+                    onClick={() => handleAction('accepted')}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Mark Accepted
+                  </SpringButton>
+                </>
+              )}
               <Magnet padding={30} magnetStrength={2}>
                 <button
                   onClick={onClose}
