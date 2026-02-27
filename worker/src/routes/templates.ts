@@ -97,6 +97,90 @@ templates.get('/:id', async (c) => {
 });
 
 /**
+ * GET /api/templates/:id/preview
+ * Return a rendered preview of the template body with sample data substituted
+ * for any {{variable}} placeholders.
+ */
+templates.get('/:id/preview', async (c) => {
+  const id = c.req.param('id');
+
+  try {
+    const row = await c.env.DB.prepare(
+      `SELECT * FROM email_templates WHERE id = ?`
+    ).bind(id).first();
+
+    if (!row) {
+      return c.json({ error: 'Template not found' }, 404);
+    }
+
+    const variables: string[] = (row as any).variables
+      ? JSON.parse((row as any).variables as string)
+      : [];
+
+    // Build sample data: each variable gets a human-readable placeholder value
+    const sampleData: Record<string, string> = {};
+    for (const variable of variables) {
+      // Convert snake_case / camelCase names to readable samples
+      sampleData[variable] = toSampleValue(variable);
+    }
+
+    // Also catch any {{variable}} tokens that appear in the body but weren't
+    // listed in the variables array.
+    const bodyText: string = (row as any).body as string;
+    const tokenRegex = /\{\{(\w+)\}\}/g;
+    let match: RegExpExecArray | null;
+    while ((match = tokenRegex.exec(bodyText)) !== null) {
+      const token = match[1];
+      if (!(token in sampleData)) {
+        sampleData[token] = toSampleValue(token);
+      }
+    }
+
+    // Replace all {{variable}} occurrences with sample values
+    const renderedBody = bodyText.replace(/\{\{(\w+)\}\}/g, (_full, token) => {
+      return sampleData[token] ?? `[${token}]`;
+    });
+
+    const renderedSubject = ((row as any).subject as string).replace(
+      /\{\{(\w+)\}\}/g,
+      (_full, token) => sampleData[token] ?? `[${token}]`
+    );
+
+    return c.json({
+      preview: {
+        id: (row as any).id,
+        name: (row as any).name,
+        subject: renderedSubject,
+        body: renderedBody,
+        sample_data: sampleData,
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/templates/:id/preview error:', err);
+    return c.json({ error: 'Failed to generate template preview' }, 500);
+  }
+});
+
+/**
+ * Convert a variable name (snake_case or camelCase) to a human-readable
+ * sample value used in previews.
+ */
+function toSampleValue(variable: string): string {
+  const lv = variable.toLowerCase();
+  if (lv.includes('name')) return 'John Doe';
+  if (lv.includes('email')) return 'john.doe@example.com';
+  if (lv.includes('company') || lv.includes('org')) return 'Acme Corp';
+  if (lv.includes('date')) return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  if (lv.includes('amount') || lv.includes('price') || lv.includes('total')) return '$99.00';
+  if (lv.includes('url') || lv.includes('link')) return 'https://example.com';
+  if (lv.includes('phone')) return '+1 (555) 000-0000';
+  if (lv.includes('address')) return '123 Main St, Springfield, USA';
+  if (lv.includes('subject')) return 'Sample Subject';
+  // Generic fallback: prettify the variable name
+  return variable.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+}
+
+/**
  * POST /api/templates
  * Create a new email template
  */
