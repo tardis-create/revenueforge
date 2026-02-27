@@ -11,6 +11,7 @@ import upload from './routes/upload';
 import leads from './routes/leads';
 import auditLog from './routes/auditLog';
 import auth from './routes/auth';
+import notifications from './routes/notifications';
 
 // Create Hono app
 const app = new Hono();
@@ -49,6 +50,7 @@ app.route('/api/dealers', dealers);
 app.route('/api/upload', upload);
 app.route('/api/audit-log', auditLog);
 app.route('/api/auth', auth);
+app.route('/api/notifications', notifications);
 
 app.notFound((c) => {
   return c.json({ error: 'Not Found' }, 404);
