@@ -46,7 +46,8 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for JWT cookie
-  const jwtCookie = request.cookies.get('jwt') || 
+  const jwtCookie = request.cookies.get('access_token') ||
+                    request.cookies.get('jwt') || 
                     request.cookies.get('token') || 
                     request.cookies.get('auth_token') ||
                     request.cookies.get('pb_auth'); // PocketBase auth

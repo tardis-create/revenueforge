@@ -33,7 +33,11 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json() as RegisterBody;
-    const { email, password, name, role = 'viewer' } = body;
+    const { email, password, name } = body;
+    
+    // Always default to 'viewer' role for new registrations
+    // Never trust user input for roles
+    const role = 'viewer';
     
     // Validation
     if (!email || !password) {
