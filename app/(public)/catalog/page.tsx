@@ -435,7 +435,7 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
 
               {/* Actions */}
               <div className="flex gap-3">
-                <a href="/rfq" className="flex-1">
+                <a href={`/rfq?product=${product.id}`} className="flex-1">
                   <SpringButton variant="primary" className="w-full">
                     Request Quote
                   </SpringButton>
