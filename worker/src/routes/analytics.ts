@@ -8,11 +8,39 @@ const analytics = new Hono<{ Bindings: Env }>();
 analytics.use('*', authMiddleware);
 
 /**
+ * Helper to extract and validate date range query params.
+ * Returns SQL fragment and bindings for a given column.
+ */
+function getDateRange(from: string | undefined, to: string | undefined, column: string): { clause: string; params: string[] } {
+  const params: string[] = [];
+  const parts: string[] = [];
+
+  if (from) {
+    parts.push(`${column} >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    parts.push(`${column} <= ?`);
+    params.push(to);
+  }
+
+  return {
+    clause: parts.length > 0 ? ' AND ' + parts.join(' AND ') : '',
+    params,
+  };
+}
+
+/**
  * GET /api/analytics/overview
- * Key metrics: total leads, revenue, conversion rate, active products
+ * Key metrics: total leads, revenue, conversion rate, active products, open quotes
  */
 analytics.get('/overview', async (c) => {
   const db = c.env.DB;
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+
+  const leadsRange = getDateRange(from, to, 'created_at');
+  const quotesRange = getDateRange(from, to, 'created_at');
 
   const [
     leadsResult,
@@ -20,17 +48,28 @@ analytics.get('/overview', async (c) => {
     conversionResult,
     productsResult,
     rfqResult,
+    openQuotesResult,
   ] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) as total FROM leads`).first<{ total: number }>(),
-    db.prepare(`SELECT COALESCE(SUM(amount), 0) as total FROM quotes WHERE status = 'accepted'`).first<{ total: number }>(),
+    db.prepare(`SELECT COUNT(*) as total FROM leads WHERE 1=1${leadsRange.clause}`)
+      .bind(...leadsRange.params)
+      .first<{ total: number }>(),
+    db.prepare(`SELECT COALESCE(SUM(amount), 0) as total FROM quotes WHERE status = 'accepted'${quotesRange.clause}`)
+      .bind(...quotesRange.params)
+      .first<{ total: number }>(),
     db.prepare(`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) as won
       FROM leads
-    `).first<{ total: number; won: number }>(),
-    db.prepare(`SELECT COUNT(*) as total FROM products WHERE in_stock = 1`).first<{ total: number }>(),
-    db.prepare(`SELECT COUNT(*) as total FROM rfq_submissions`).first<{ total: number }>(),
+      WHERE 1=1${leadsRange.clause}
+    `).bind(...leadsRange.params).first<{ total: number; won: number }>(),
+    db.prepare(`SELECT COUNT(*) as total FROM products WHERE is_active = 1`).first<{ total: number }>(),
+    db.prepare(`SELECT COUNT(*) as total FROM rfq_submissions WHERE 1=1${leadsRange.clause}`)
+      .bind(...leadsRange.params)
+      .first<{ total: number }>(),
+    db.prepare(`SELECT COUNT(*) as total FROM quotes WHERE status NOT IN ('accepted', 'rejected', 'expired')${quotesRange.clause}`)
+      .bind(...quotesRange.params)
+      .first<{ total: number }>(),
   ]);
 
   const totalLeads = leadsResult?.total ?? 0;
@@ -45,6 +84,7 @@ analytics.get('/overview', async (c) => {
       active_products: productsResult?.total ?? 0,
       total_rfqs: rfqResult?.total ?? 0,
       won_leads: wonLeads,
+      open_quotes: openQuotesResult?.total ?? 0,
     },
   });
 });
@@ -55,33 +95,38 @@ analytics.get('/overview', async (c) => {
  */
 analytics.get('/leads', async (c) => {
   const db = c.env.DB;
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const { clause, params } = getDateRange(from, to, 'created_at');
 
   const [byStatus, bySource, recentLeads] = await Promise.all([
     db.prepare(`
       SELECT status, COUNT(*) as count
       FROM leads
+      WHERE 1=1${clause}
       GROUP BY status
       ORDER BY count DESC
-    `).all<{ status: string; count: number }>(),
+    `).bind(...params).all<{ status: string; count: number }>(),
 
     db.prepare(`
       SELECT
         COALESCE(source, 'unknown') as source,
         COUNT(*) as count
       FROM leads
+      WHERE 1=1${clause}
       GROUP BY source
       ORDER BY count DESC
-    `).all<{ source: string; count: number }>(),
+    `).bind(...params).all<{ source: string; count: number }>(),
 
     db.prepare(`
       SELECT
         DATE(created_at) as date,
         COUNT(*) as count
       FROM leads
-      WHERE created_at >= DATE('now', '-30 days')
+      WHERE created_at >= DATE('now', '-30 days')${clause}
       GROUP BY DATE(created_at)
       ORDER BY date ASC
-    `).all<{ date: string; count: number }>(),
+    `).bind(...params).all<{ date: string; count: number }>(),
   ]);
 
   return c.json({
@@ -99,6 +144,9 @@ analytics.get('/leads', async (c) => {
  */
 analytics.get('/revenue', async (c) => {
   const db = c.env.DB;
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const { clause, params } = getDateRange(from, to, 'created_at');
 
   const [monthly, byCurrency, summary] = await Promise.all([
     db.prepare(`
@@ -107,10 +155,10 @@ analytics.get('/revenue', async (c) => {
         COALESCE(SUM(amount), 0) as revenue,
         COUNT(*) as count
       FROM quotes
-      WHERE status = 'accepted' AND accepted_at IS NOT NULL
+      WHERE status = 'accepted' AND accepted_at IS NOT NULL${clause}
       GROUP BY STRFTIME('%Y-%m', accepted_at)
       ORDER BY month ASC
-    `).all<{ month: string; revenue: number; count: number }>(),
+    `).bind(...params).all<{ month: string; revenue: number; count: number }>(),
 
     db.prepare(`
       SELECT
@@ -118,10 +166,10 @@ analytics.get('/revenue', async (c) => {
         COALESCE(SUM(amount), 0) as total,
         COUNT(*) as count
       FROM quotes
-      WHERE status = 'accepted'
+      WHERE status = 'accepted'${clause}
       GROUP BY currency
       ORDER BY total DESC
-    `).all<{ currency: string; total: number; count: number }>(),
+    `).bind(...params).all<{ currency: string; total: number; count: number }>(),
 
     db.prepare(`
       SELECT
@@ -129,8 +177,8 @@ analytics.get('/revenue', async (c) => {
         COALESCE(AVG(amount), 0) as avg_deal_size,
         COUNT(*) as total_deals
       FROM quotes
-      WHERE status = 'accepted'
-    `).first<{ total_revenue: number; avg_deal_size: number; total_deals: number }>(),
+      WHERE status = 'accepted'${clause}
+    `).bind(...params).first<{ total_revenue: number; avg_deal_size: number; total_deals: number }>(),
   ]);
 
   return c.json({
@@ -150,26 +198,33 @@ analytics.get('/revenue', async (c) => {
  */
 analytics.get('/conversion', async (c) => {
   const db = c.env.DB;
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const leadsRange = getDateRange(from, to, 'created_at');
+  const quotesRange = getDateRange(from, to, 'created_at');
 
   const [leadFunnel, quoteFunnel, overallRate] = await Promise.all([
     db.prepare(`
       SELECT status, COUNT(*) as count
       FROM leads
+      WHERE 1=1${leadsRange.clause}
       GROUP BY status
-    `).all<{ status: string; count: number }>(),
+    `).bind(...leadsRange.params).all<{ status: string; count: number }>(),
 
     db.prepare(`
       SELECT status, COUNT(*) as count
       FROM quotes
+      WHERE 1=1${quotesRange.clause}
       GROUP BY status
-    `).all<{ status: string; count: number }>(),
+    `).bind(...quotesRange.params).all<{ status: string; count: number }>(),
 
     db.prepare(`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) as won
       FROM leads
-    `).first<{ total: number; won: number }>(),
+      WHERE 1=1${leadsRange.clause}
+    `).bind(...leadsRange.params).first<{ total: number; won: number }>(),
   ]);
 
   const total = overallRate?.total ?? 0;
@@ -218,6 +273,9 @@ analytics.get('/conversion', async (c) => {
 analytics.get('/top-products', async (c) => {
   const db = c.env.DB;
   const limit = parseInt(c.req.query('limit') ?? '10', 10);
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const { clause, params } = getDateRange(from, to, 'q.created_at');
 
   const result = await db.prepare(`
     SELECT
@@ -230,11 +288,11 @@ analytics.get('/top-products', async (c) => {
       COALESCE(SUM(qi.total_price), 0) as total_value
     FROM products p
     LEFT JOIN quote_items qi ON qi.product_id = p.id
-    LEFT JOIN quotes q ON q.id = qi.quote_id AND q.status = 'accepted'
+    LEFT JOIN quotes q ON q.id = qi.quote_id AND q.status = 'accepted'${clause}
     GROUP BY p.id
     ORDER BY total_value DESC, quote_count DESC
     LIMIT ?
-  `).bind(limit).all<{
+  `).bind(...params, limit).all<{
     id: string;
     name: string;
     category: string;
@@ -256,6 +314,9 @@ analytics.get('/top-products', async (c) => {
 analytics.get('/top-dealers', async (c) => {
   const db = c.env.DB;
   const limit = parseInt(c.req.query('limit') ?? '10', 10);
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const { clause, params } = getDateRange(from, to, 'l.created_at');
 
   const result = await db.prepare(`
     SELECT
@@ -271,11 +332,11 @@ analytics.get('/top-dealers', async (c) => {
         ELSE 0
       END as win_rate
     FROM users u
-    LEFT JOIN leads l ON l.assigned_to = u.id
+    LEFT JOIN leads l ON l.assigned_to = u.id${clause}
     GROUP BY u.id
     ORDER BY won_leads DESC, estimated_revenue DESC
     LIMIT ?
-  `).bind(limit).all<{
+  `).bind(...params, limit).all<{
     id: string;
     name: string;
     email: string;
