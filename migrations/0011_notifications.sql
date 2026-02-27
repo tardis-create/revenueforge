@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS notification_logs (
   id TEXT PRIMARY KEY,
   event TEXT NOT NULL,
-  template_id TEXT,
+  template_id TEXT REFERENCES email_templates(id),
   recipient TEXT,
   subject TEXT,
   body TEXT,

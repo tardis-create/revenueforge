@@ -1,7 +1,12 @@
 import { Hono } from 'hono';
+import { authMiddleware, requireAdmin } from '../middleware/auth';
 import { Env } from '../types';
 
 const notifications = new Hono<{ Bindings: Env }>();
+
+// All notification routes require auth + admin
+notifications.use('*', authMiddleware);
+notifications.use('*', requireAdmin);
 
 // Template variable renderer
 function renderTemplate(template: string, data: Record<string, string>): string {
@@ -216,6 +221,7 @@ notifications.post('/webhook', async (c) => {
   }>();
 
   if (!body.url) return c.json({ error: 'url is required' }, 400);
+  if (!body.url.startsWith('https://')) return c.json({ error: 'url must use HTTPS' }, 400);
   if (!body.event) return c.json({ error: 'event is required' }, 400);
 
   const payload = {
