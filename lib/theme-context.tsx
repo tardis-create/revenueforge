@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import {
@@ -93,6 +94,16 @@ export function ThemeProvider({
 
   const [isLoading, setIsLoading] = useState(true);
 
+  // FIX: Use ref to hold theme.id snapshot to avoid infinite re-render loop
+  // When setThemeState is called, theme.id changes, which would cause
+  // refreshFromSettings to get a new reference if theme.id was in deps
+  const themeIdRef = useRef(theme.id);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    themeIdRef.current = theme.id;
+  }, [theme.id]);
+
   /**
    * Fetch theme settings from /api/settings
    * This is called on initial mount to load theme from server
@@ -116,6 +127,9 @@ export function ThemeProvider({
   /**
    * Refresh theme from API settings
    * Called on init and can be called manually when settings change
+   * 
+   * FIX: Removed theme.id from deps array to prevent infinite re-render loop.
+   * Uses themeIdRef.current instead for the localStorage comparison.
    */
   const refreshFromSettings = useCallback(async () => {
     setIsLoading(true);
@@ -159,9 +173,10 @@ export function ThemeProvider({
       }
       
       // After loading from API, check localStorage for user preference
+      // FIX: Use ref instead of theme.id to avoid dep cycle
       try {
         const savedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
-        if (savedThemeId && savedThemeId !== theme.id) {
+        if (savedThemeId && savedThemeId !== themeIdRef.current) {
           const savedTheme = getThemeById(savedThemeId);
           setThemeState(prev => ({
             ...savedTheme,
@@ -184,7 +199,7 @@ export function ThemeProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [fetchSettings, theme.id]);
+  }, [fetchSettings]); // FIX: Removed theme.id from deps
 
   // Load theme from /api/settings on mount (CRITICAL FIX)
   useEffect(() => {

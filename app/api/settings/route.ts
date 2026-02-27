@@ -130,11 +130,14 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Validate allowed settings
+    // FIX: Added missing font_heading, font_body, background_color to whitelist
     const allowedSettings = [
       'company_name', 'logo_url', 'primary_color', 'accent_color', 'tagline',
       'address', 'phone', 'email',
       'smtp_host', 'smtp_port', 'smtp_user', 'smtp_password', 'smtp_from',
-      'feature_dealer_portal', 'feature_analytics', 'feature_rfq_form'
+      'feature_dealer_portal', 'feature_analytics', 'feature_rfq_form',
+      // FIX: Added missing theme-related settings
+      'font_heading', 'font_body', 'background_color'
     ]
     
     const invalidKeys = Object.keys(updates).filter(key => !allowedSettings.includes(key))
@@ -163,10 +166,16 @@ export async function PATCH(request: NextRequest) {
     // Invalidate KV cache
     await env.KV.delete(CACHE_KEY)
     
-    // Fetch updated settings
-    const updatedSettings = await env.DB.prepare(
-      'SELECT key, value, category, is_public, updated_at, updated_by FROM settings WHERE key IN (?)'
-    ).bind(Object.keys(updates).join(',')).all<Setting>()
+    // FIX: Dynamically build IN clause with proper parameterization
+    // Previously: 'WHERE key IN (?)'.bind(Object.keys(updates).join(','))
+    // That passed all keys as a single string like "key1,key2,key3"
+    // Now: Build 'WHERE key IN (?, ?, ?)' with individual bindings
+    const keys = Object.keys(updates)
+    const placeholders = keys.map(() => '?').join(', ')
+    const fetchQuery = `SELECT key, value, category, is_public, updated_at, updated_by FROM settings WHERE key IN (${placeholders})`
+    
+    const fetchStmt = env.DB.prepare(fetchQuery)
+    const updatedSettings = await fetchStmt.bind(...keys).all<Setting>()
     
     const settingsMap = updatedSettings.results.reduce((acc, setting) => {
       try {
