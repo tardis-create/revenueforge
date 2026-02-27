@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import products from './routes/products';
+import auditLogs from './routes/auditLogs';
 import templates from './routes/templates';
 import users from './routes/users';
 import analytics from './routes/analytics';
@@ -36,6 +37,9 @@ app.get('/health', (c) => {
 
 // Mount product routes under /api/products
 app.route('/api/products', products);
+
+// Mount audit log routes under /api/audit-logs
+app.route('/api/audit-logs', auditLogs);
 
 // Mount email template routes under /api/templates
 app.route('/api/templates', templates);
