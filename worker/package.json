@@ -6,7 +6,12 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",
-    "dry-run": "wrangler deploy --dry-run"
+    "dry-run": "wrangler deploy --dry-run",
+    "migrate:up": "node src/scripts/migrate.js up",
+    "migrate:up:remote": "node src/scripts/migrate.js up --remote",
+    "migrate:status": "node src/scripts/migrate.js status",
+    "migrate:baseline": "node src/scripts/migrate.js baseline",
+    "migrate:create": "node src/scripts/migrate.js create"
   },
   "dependencies": {
     "hono": "^4.12.2",
