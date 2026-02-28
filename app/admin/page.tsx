@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { API_BASE_URL } from '@/lib/api'
-import { AnimatedContent, CountUp, LoadingSkeleton } from '@/app/components'
+import { AnimatedContent, CountUp, LoadingSkeleton, Breadcrumbs } from '@/app/components'
 
 // Types
 interface DashboardStats {
@@ -14,6 +14,11 @@ interface DashboardStats {
   revenue: number
   leadsByStatus: LeadStatusData[]
   revenueTrend: RevenueTrendData[]
+  // Trend data (percentage change from previous period)
+  productsTrend?: number
+  leadsTrend?: number
+  quotesTrend?: number
+  revenueTrendPercent?: number
 }
 
 interface LeadStatusData {
@@ -261,14 +266,40 @@ function ActivityItemComponent({ item, index }: { item: ActivityItem; index: num
   )
 }
 
-// KPI Card component
+// Trend indicator component
+function TrendIndicator({ trend }: { trend?: number }) {
+  if (trend === undefined || trend === null) return null
+  
+  const isPositive = trend >= 0
+  const color = isPositive ? 'text-emerald-400' : 'text-red-400'
+  const bgColor = isPositive ? 'bg-emerald-500/10' : 'bg-red-500/10'
+  const arrow = isPositive ? (
+    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+    </svg>
+  ) : (
+    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
+  )
+
+  return (
+    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${bgColor} ${color}`}>
+      {arrow}
+      <span className="text-xs font-medium">{Math.abs(trend)}%</span>
+    </div>
+  )
+}
+
+// KPI Card component with trend indicator
 function KPICard({ 
   title, 
   value, 
   icon, 
   color, 
   prefix = '', 
-  delay = 0 
+  delay = 0,
+  trend
 }: { 
   title: string
   value: number
@@ -276,6 +307,7 @@ function KPICard({
   color: string
   prefix?: string
   delay?: number
+  trend?: number
 }) {
   return (
     <AnimatedContent delay={delay}>
@@ -284,6 +316,7 @@ function KPICard({
           <div className={`p-3 rounded-lg ${color}`}>
             {icon}
           </div>
+          <TrendIndicator trend={trend} />
         </div>
         <p className="text-sm text-zinc-400 mb-1">{title}</p>
         <p className="text-3xl font-bold text-zinc-100">
@@ -339,6 +372,12 @@ export default function AdminDashboardPage() {
   })
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Dashboard' }
+  ]
 
   // Fetch dashboard data
   useEffect(() => {
@@ -422,6 +461,10 @@ export default function AdminDashboardPage() {
       <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
         <div className="max-w-7xl mx-auto">
           <AnimatedContent>
+            {/* Breadcrumbs */}
+            <Breadcrumbs items={breadcrumbItems} className="mb-4" />
+            
+            {/* Page Title */}
             <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
               Dashboard
             </h1>
@@ -450,6 +493,7 @@ export default function AdminDashboardPage() {
               value={stats.totalProducts}
               delay={0.1}
               color="bg-purple-500/10"
+              trend={stats.productsTrend}
               icon={
                 <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -461,6 +505,7 @@ export default function AdminDashboardPage() {
               value={stats.activeLeads}
               delay={0.2}
               color="bg-cyan-500/10"
+              trend={stats.leadsTrend}
               icon={
                 <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -472,6 +517,7 @@ export default function AdminDashboardPage() {
               value={stats.openQuotes}
               delay={0.3}
               color="bg-emerald-500/10"
+              trend={stats.quotesTrend}
               icon={
                 <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -484,6 +530,7 @@ export default function AdminDashboardPage() {
               delay={0.4}
               prefix="$"
               color="bg-amber-500/10"
+              trend={stats.revenueTrendPercent}
               icon={
                 <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
