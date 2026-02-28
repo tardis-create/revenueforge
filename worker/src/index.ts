@@ -13,6 +13,7 @@ import leads from './routes/leads';
 import auditLog from './routes/auditLog';
 import auth from './routes/auth';
 import notifications from './routes/notifications';
+import quotes from './routes/quotes';
 import { createRateLimiter } from './middleware/rateLimiter';
 import type { Env } from './types';
 
@@ -112,6 +113,7 @@ app.route('/api/upload', upload);
 app.route('/api/audit-log', auditLog);
 app.route('/api/auth', auth);
 app.route('/api/notifications', notifications);
+app.route('/api/quotes', quotes);
 
 // ── Error handlers ────────────────────────────────────────────────────────────
 
