@@ -638,14 +638,16 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   useEffect(() => {
     const fetchRFQs = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/leads?status=new,reviewing`, {
+        const response = await fetch(`${API_BASE_URL}/api/leads`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           }
         })
-        const data: ApiResponse<RFQ[]> = await response.json()
-        if (data.success && data.data) {
-          setRfqs(data.data.filter((rfq: RFQ) => rfq.status !== 'quoted'))
+        const data = await response.json()
+        if (data.leads && Array.isArray(data.leads)) {
+          // Filter leads that haven't been quoted yet - status is not 'quoted'
+          const availableLeads = (data.leads as RFQ[]).filter((rfq: RFQ) => rfq.status !== 'quoted')
+          setRfqs(availableLeads)
         }
       } catch (err) {
         console.error('Error fetching RFQs:', err)
