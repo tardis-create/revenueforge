@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Middleware to protect admin routes
- * Redirects unauthenticated users to /login
+ * Middleware to protect admin and dealer routes
+ * Redirects unauthenticated users to login pages
  */
 
 // Routes that require authentication
@@ -20,6 +20,11 @@ const protectedRoutes = [
   '/users',
 ];
 
+// Dealer routes that require dealer authentication
+const dealerProtectedRoutes = [
+  '/dealer',
+];
+
 // Routes that should be accessible without authentication (login pages)
 const publicRoutes = [
   '/login',
@@ -32,6 +37,27 @@ export function middleware(request: NextRequest) {
 
   // Check if this is a public route - allow access
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    return NextResponse.next();
+  }
+
+  // Check if this is a dealer protected route
+  const isDealerRoute = dealerProtectedRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  );
+
+  if (isDealerRoute) {
+    // For dealer routes, check for auth
+    const jwtCookie = request.cookies.get('jwt') || 
+                      request.cookies.get('token') || 
+                      request.cookies.get('auth_token') ||
+                      request.cookies.get('pb_auth');
+
+    if (!jwtCookie || !jwtCookie.value) {
+      const loginUrl = new URL('/dealer/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
     return NextResponse.next();
   }
 

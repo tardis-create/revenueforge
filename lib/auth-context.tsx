@@ -47,8 +47,19 @@ interface AuthProviderProps {
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 
-// API base URL - in production, this would be an environment variable
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Helper to set cookie
+const setCookie = (name: string, value: string, days: number = 7) => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+};
+
+// Helper to delete cookie
+const deleteCookie = (name: string) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+};
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
@@ -68,6 +79,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (token && userData) {
           const user = JSON.parse(userData) as User;
+          
+          // Set cookie for middleware
+          setCookie('auth_token', token);
+          
           setState({
             user,
             isLoading: false,
@@ -75,6 +90,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             error: null,
           });
         } else {
+          // Clear any stale cookies
+          deleteCookie('auth_token');
+          
           setState({
             user: null,
             isLoading: false,
@@ -86,6 +104,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Clear potentially corrupted data
         localStorage.removeItem(AUTH_TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        deleteCookie('auth_token');
+        
         setState({
           user: null,
           isLoading: false,
@@ -103,25 +123,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your auth API
-      // For now, we simulate a successful login with mock data
-      // TODO: Replace with actual API call when backend is ready
+      // For demo/development: simple auth check
+      // In production, this would validate against an API
+      const isDealerDemo = email === 'dealer@revenueforge.io' && password === 'dealer123';
+      const isAdminDemo = email === 'admin@revenueforge.io' && password === 'admin123';
       
+      if (!isDealerDemo && !isAdminDemo) {
+        throw new Error('Invalid credentials');
+      }
+
       // Simulated API delay
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Mock user data - in production, this comes from the API
+      // Create user based on email
       const user: User = {
-        id: '1',
+        id: isDealerDemo ? 'dealer-1' : 'admin-1',
         email,
-        name: email.split('@')[0],
-        role: email.includes('admin') ? 'admin' : email.includes('dealer') ? 'dealer' : 'user',
+        name: isDealerDemo ? 'Dealer Partner' : 'Admin User',
+        role: isDealerDemo ? 'dealer' : 'admin',
       };
 
-      // Store auth data
-      const mockToken = btoa(`${email}:${Date.now()}`); // Simple mock token
+      // Generate token
+      const mockToken = btoa(`${email}:${Date.now()}`);
+      
+      // Store in localStorage
       localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      
+      // Set cookie for middleware
+      setCookie('auth_token', mockToken);
 
       setState({
         user,
@@ -133,15 +163,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Redirect based on role
       if (user.role === 'dealer') {
         router.push('/dealer');
-      } else {
+      } else if (user.role === 'admin') {
         router.push('/admin');
+      } else {
+        router.push('/');
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       setState({
         user: null,
         isLoading: false,
         isAuthenticated: false,
-        error: 'Invalid email or password',
+        error: errorMessage,
       });
       throw error;
     }
@@ -157,10 +190,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your registration API
-      // For now, we simulate a successful registration
-      // TODO: Replace with actual API call when backend is ready
-      
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const user: User = {
@@ -174,6 +203,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const mockToken = btoa(`${email}:${Date.now()}`);
       localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      setCookie('auth_token', mockToken);
 
       setState({
         user,
@@ -182,8 +212,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null,
       });
 
-      // Redirect to login after successful registration
-      // In a real app, you might want to auto-login or show a success message
       router.push('/login?registered=true');
     } catch (error) {
       setState({
@@ -201,9 +229,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      // Clear auth data
+      // Clear localStorage
       localStorage.removeItem(AUTH_TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      
+      // Clear cookie
+      deleteCookie('auth_token');
 
       setState({
         user: null,
@@ -212,7 +243,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null,
       });
 
-      // Redirect to login
       router.push('/login');
     } catch {
       setState({
@@ -230,14 +260,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your password reset API
-      // TODO: Replace with actual API call when backend is ready
-      
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       setState((prev) => ({ ...prev, isLoading: false }));
-      
-      // Return success - in production, the API would send an email
       return;
     } catch (error) {
       setState((prev) => ({
@@ -254,19 +278,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your password reset API with the token
-      // TODO: Replace with actual API call when backend is ready
-      
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Validate token exists (mock validation)
       if (!token || token.length < 10) {
         throw new Error('Invalid or expired reset token');
       }
 
       setState((prev) => ({ ...prev, isLoading: false }));
-      
-      // Redirect to login after successful reset
       router.push('/login?reset=true');
     } catch (error) {
       setState((prev) => ({
@@ -300,31 +318,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   
-  // During static generation or if used outside provider, return a default no-op implementation
   if (context === undefined) {
-    // Return a safe default that won't break during static generation
     return {
       user: null,
       isLoading: false,
       isAuthenticated: false,
       error: null,
       login: async () => {
-        console.warn('AuthProvider not initialized - login called during static generation');
+        console.warn('AuthProvider not initialized');
       },
       register: async () => {
-        console.warn('AuthProvider not initialized - register called during static generation');
+        console.warn('AuthProvider not initialized');
       },
       logout: async () => {
-        console.warn('AuthProvider not initialized - logout called during static generation');
+        console.warn('AuthProvider not initialized');
       },
       forgotPassword: async () => {
-        console.warn('AuthProvider not initialized - forgotPassword called during static generation');
+        console.warn('AuthProvider not initialized');
       },
       resetPassword: async () => {
-        console.warn('AuthProvider not initialized - resetPassword called during static generation');
+        console.warn('AuthProvider not initialized');
       },
       clearError: () => {
-        console.warn('AuthProvider not initialized - clearError called during static generation');
+        console.warn('AuthProvider not initialized');
       },
     };
   }
@@ -332,5 +348,4 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-// Export the context for advanced use cases
 export { AuthContext };
