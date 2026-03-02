@@ -609,12 +609,31 @@ function QuoteDetailModal({
   )
 }
 
-// CreateQuoteModal with RFQ selection
+// CreateQuoteModal with full line items support
 function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (quote: Quote) => void }) {
   const [rfqs, setRfqs] = useState<RFQ[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedRFQ, setSelectedRFQ] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
+  
+  // Form state
+  const [selectedRFQ, setSelectedRFQ] = useState<string>('')
+  const [companyName, setCompanyName] = useState('')
+  const [contactName, setContactName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [validityDays, setValidityDays] = useState(30)
+  const [terms, setTerms] = useState(DEFAULT_TERMS)
+  const [notes, setNotes] = useState('')
+  const [currency, setCurrency] = useState('USD')
+  
+  // Line items
+  const [items, setItems] = useState<Array<{
+    id: string
+    description: string
+    quantity: number
+    unit_price: number
+    product_name: string
+  }>>([])
 
   useEffect(() => {
     const fetchRFQs = async () => {
@@ -637,14 +656,62 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     fetchRFQs()
   }, [])
 
+  // Auto-fill from selected RFQ
+  useEffect(() => {
+    if (selectedRFQ) {
+      const rfq = rfqs.find(r => r.id === selectedRFQ)
+      if (rfq) {
+        setCompanyName(rfq.company_name || '')
+        setContactName(rfq.contact_name || '')
+        setEmail(rfq.email || '')
+        setPhone(rfq.phone || '')
+      }
+    }
+  }, [selectedRFQ, rfqs])
+
+  const addLineItem = () => {
+    setItems([...items, {
+      id: crypto.randomUUID(),
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      product_name: ''
+    }])
+  }
+
+  const updateLineItem = (index: number, field: string, value: any) => {
+    const updated = [...items]
+    updated[index] = { ...updated[index], [field]: value }
+    
+    // Auto-calculate total
+    if (field === 'quantity' || field === 'unit_price') {
+      updated[index].total_price = updated[index].quantity * updated[index].unit_price
+    }
+    
+    setItems(updated)
+  }
+
+  const removeLineItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index))
+  }
+
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+  }
+
   const handleSubmit = async () => {
-    if (!selectedRFQ) {
-      alert('Please select an RFQ')
+    if (!companyName || !email) {
+      alert('Please fill in company name and email')
       return
     }
 
     setSubmitting(true)
     try {
+      const quoteItems = items.map(item => ({
+        ...item,
+        total_price: item.quantity * item.unit_price
+      }))
+
       const response = await fetch(`${API_BASE_URL}/api/quotes`, {
         method: 'POST',
         headers: {
@@ -652,10 +719,16 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
         body: JSON.stringify({
-          rfq_id: selectedRFQ,
-          validity_days: 30,
-          terms: DEFAULT_TERMS,
-          items: []
+          rfq_id: selectedRFQ || null,
+          company_name: companyName,
+          contact_name: contactName,
+          email: email,
+          phone: phone || null,
+          currency: currency,
+          validity_days: validityDays,
+          terms: terms,
+          notes: notes || null,
+          items: quoteItems
         })
       })
 
@@ -674,51 +747,229 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold text-zinc-100 mb-4">Create Quote</h2>
-        
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 py-8">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+        <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-6 rounded-t-2xl z-10">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-zinc-100">Create Quote</h2>
+              <button onClick={onClose} className="text-zinc-400 hover:text-zinc-200">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-        ) : rfqs.length === 0 ? (
-          <p className="text-zinc-400 mb-6">No RFQs available to quote. Create an RFQ first.</p>
-        ) : (
-          <>
-            <p className="text-zinc-400 mb-4">Select an RFQ to create a quote:</p>
-            <select
-              value={selectedRFQ}
-              onChange={(e) => setSelectedRFQ(e.target.value)}
-              className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 mb-6"
-            >
-              <option value="">Select an RFQ...</option>
-              {rfqs.map((rfq) => (
-                <option key={rfq.id} value={rfq.id}>
-                  {rfq.company_name} - {rfq.contact_name} ({rfq.id})
-                </option>
-              ))}
-            </select>
-          </>
-        )}
+          
+          <div className="p-6 space-y-6">
+            {/* RFQ Selection */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Link to RFQ (Optional)</label>
+              <select
+                value={selectedRFQ}
+                onChange={(e) => setSelectedRFQ(e.target.value)}
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+              >
+                <option value="">No RFQ - Manual Entry</option>
+                {rfqs.map((rfq) => (
+                  <option key={rfq.id} value={rfq.id}>
+                    {rfq.company_name} - {rfq.contact_name} ({rfq.id.slice(0, 8)})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
-          >
-            Cancel
-          </button>
-          {!loading && rfqs.length > 0 && (
+            {/* Customer Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Company Name *</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                  placeholder="Company name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Contact Name</label>
+                <input
+                  type="text"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                  placeholder="Contact name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                  placeholder="email@company.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                  placeholder="+1 234 567 8900"
+                />
+              </div>
+            </div>
+
+            {/* Line Items */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-zinc-300">Line Items</label>
+                <button
+                  type="button"
+                  onClick={addLineItem}
+                  className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Item
+                </button>
+              </div>
+              
+              {items.length === 0 ? (
+                <div className="text-center py-8 bg-zinc-800/30 rounded-lg border border-zinc-800">
+                  <p className="text-zinc-500">No items added yet. Click "Add Item" to add line items.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <div key={item.id} className="flex gap-3 items-start bg-zinc-800/30 p-3 rounded-lg">
+                      <div className="flex-1 grid grid-cols-4 gap-2">
+                        <input
+                          type="text"
+                          value={item.product_name}
+                          onChange={(e) => updateLineItem(index, 'product_name', e.target.value)}
+                          className="p-2 bg-zinc-800 border border-zinc-700 rounded text-zinc-100 text-sm"
+                          placeholder="Product/Service"
+                        />
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                          className="p-2 bg-zinc-800 border border-zinc-700 rounded text-zinc-100 text-sm col-span-2"
+                          placeholder="Description"
+                        />
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                          className="p-2 bg-zinc-800 border border-zinc-700 rounded text-zinc-100 text-sm"
+                          placeholder="Qty"
+                          min="1"
+                        />
+                        <input
+                          type="number"
+                          value={item.unit_price}
+                          onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          className="p-2 bg-zinc-800 border border-zinc-700 rounded text-zinc-100 text-sm"
+                          placeholder="Unit Price"
+                          step="0.01"
+                        />
+                        <div className="p-2 text-zinc-100 text-sm font-medium text-right">
+                          ${(item.quantity * item.unit_price).toFixed(2)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeLineItem(index)}
+                        className="text-zinc-500 hover:text-red-400 p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {items.length > 0 && (
+                <div className="mt-3 text-right text-lg font-bold text-zinc-100">
+                  Total: {currency} {calculateTotal().toFixed(2)}
+                </div>
+              )}
+            </div>
+
+            {/* Quote Details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Currency</label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="INR">INR</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Valid For (Days)</label>
+                <input
+                  type="number"
+                  value={validityDays}
+                  onChange={(e) => setValidityDays(parseInt(e.target.value) || 30)}
+                  className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            {/* Terms */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Terms & Conditions</label>
+              <textarea
+                value={terms}
+                onChange={(e) => setTerms(e.target.value)}
+                rows={4}
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-sm"
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Internal Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-sm"
+                placeholder="Internal notes (not visible to customer)"
+              />
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 bg-zinc-900 border-t border-zinc-800 p-6 rounded-b-2xl flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
+            >
+              Cancel
+            </button>
             <button
               onClick={handleSubmit}
-              disabled={submitting || !selectedRFQ}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+              disabled={submitting || !companyName || !email}
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Quote'}
             </button>
-          )}
+          </div>
         </div>
       </div>
     </div>
