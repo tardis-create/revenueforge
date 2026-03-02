@@ -119,15 +119,24 @@ export default function RFQForm() {
     setSubmitStatus(null);
 
     try {
+      const payload = {
+        company_name: formData.companyName,
+        contact_name: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        service_type: formData.productRequirements,
+        unit: formData.unit,
+        timeline: formData.deliveryTimeline,
+        notes: formData.additionalNotes,
+        quantity: Number(formData.quantity),
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/rfq`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          quantity: Number(formData.quantity),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
