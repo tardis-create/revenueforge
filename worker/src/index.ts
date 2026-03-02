@@ -10,6 +10,7 @@ import analytics from './routes/analytics';
 import dealers from './routes/dealers';
 import upload from './routes/upload';
 import leads from './routes/leads';
+import rfq from './routes/rfq';
 import auditLog from './routes/auditLog';
 import auth from './routes/auth';
 import notifications from './routes/notifications';
@@ -93,6 +94,7 @@ app.get('/', (c) => {
     endpoints: {
       products: '/api/products',
       leads: '/api/leads',
+      rfq: '/api/rfq',
       health: '/health',
     },
   });
@@ -104,6 +106,7 @@ app.get('/health', (c) => {
 
 app.route('/api/products', products);
 app.route('/api/leads', leads);
+app.route('/api/rfq', rfq);
 app.route('/api/audit-logs', auditLogs);
 app.route('/api/templates', templates);
 app.route('/api/users', users);
