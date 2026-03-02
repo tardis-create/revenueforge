@@ -87,10 +87,18 @@ export default function QuotesPage() {
         }
       })
       
-      const data: ApiResponse<Quote[]> = await response.json()
+      const data = await response.json()
       
+      // Handle both { success: true, data: [...] } and { quotes: [...] } response formats
+      let quotesData: Quote[] = []
       if (data.success && data.data) {
-        setQuotes(data.data)
+        quotesData = data.data
+      } else if (data.quotes && Array.isArray(data.quotes)) {
+        quotesData = data.quotes
+      }
+      
+      if (quotesData.length > 0 || data.success !== false) {
+        setQuotes(quotesData)
       } else {
         setError(data.error || 'Failed to load quotes')
       }
