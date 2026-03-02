@@ -48,7 +48,7 @@ const AUTH_TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 
 // API base URL - in production, this would be an environment variable
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://revenueforge-api.pronitopenclaw.workers.dev';
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
@@ -103,24 +103,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your auth API
-      // For now, we simulate a successful login with mock data
-      // TODO: Replace with actual API call when backend is ready
-      
-      // Simulated API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Mock user data - in production, this comes from the API
-      const user: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        role: email.includes('admin') ? 'admin' : email.includes('dealer') ? 'dealer' : 'user',
-      };
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid email or password');
+      }
 
       // Store auth data
-      const mockToken = btoa(`${email}:${Date.now()}`); // Simple mock token
-      localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
+      const token = data.token || data.jwt;
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+      }
+
+      const user: User = {
+        id: data.user?.id || data.user_id,
+        email: data.user?.email || email,
+        name: [data.user?.first_name, data.user?.last_name].filter(Boolean).join(' ') || email.split('@')[0],
+        role: data.user?.role || 'user',
+        company: data.user?.company_name,
+      };
+
       localStorage.setItem(USER_KEY, JSON.stringify(user));
 
       setState({
@@ -141,7 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: null,
         isLoading: false,
         isAuthenticated: false,
-        error: 'Invalid email or password',
+        error: error instanceof Error ? error.message : 'Invalid email or password',
       });
       throw error;
     }
