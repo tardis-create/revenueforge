@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-
 import { useEffect, useState } from 'react'
 import { 
   BlurText, 
@@ -11,6 +10,7 @@ import {
   GlareHover,
   CountUp
 } from '@/app/components'
+import { useAuth } from '@/lib/auth-context'
 
 interface DashboardStats {
   totalOrders: number
@@ -18,6 +18,7 @@ interface DashboardStats {
   totalRevenue: number
   totalCommission: number
   activeProducts: number
+  assignedLeads: number
 }
 
 interface RecentOrder {
@@ -30,13 +31,34 @@ interface RecentOrder {
 }
 
 export default function DealerDashboard() {
-  const [stats] = useState<DashboardStats>({
+  const { user } = useAuth()
+  const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 47,
     pendingOrders: 8,
     totalRevenue: 128450,
     totalCommission: 12845,
     activeProducts: 24,
+    assignedLeads: 0,
   })
+
+  // Fetch assigned leads count
+  useEffect(() => {
+    const fetchLeadsCount = async () => {
+      if (!user?.id) return
+      
+      try {
+        const response = await fetch(`/api/leads?dealer_id=${user.id}&limit=1`)
+        if (response.ok) {
+          const data = await response.json()
+          setStats(prev => ({ ...prev, assignedLeads: data.pagination?.total || 0 }))
+        }
+      } catch (error) {
+        console.error('Failed to fetch leads:', error)
+      }
+    }
+
+    fetchLeadsCount()
+  }, [user?.id])
 
   const [recentOrders] = useState<RecentOrder[]>([
     { id: 'ORD-001', product: 'Enterprise Analytics Suite', customer: 'TechCorp Inc.', amount: 4500, status: 'completed', date: '2026-02-25' },
@@ -97,10 +119,11 @@ export default function DealerDashboard() {
           </AnimatedContent>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             {[
               { label: 'Total Orders', value: stats.totalOrders, change: '+12%', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'from-blue-600 to-blue-400' },
               { label: 'Pending Orders', value: stats.pendingOrders, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-amber-600 to-amber-400' },
+              { label: 'Assigned Leads', value: stats.assignedLeads, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-cyan-600 to-cyan-400' },
               { label: 'Total Revenue', value: stats.totalRevenue, prefix: '$', change: '+18%', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-600 to-emerald-400' },
               { label: 'Your Commission', value: stats.totalCommission, prefix: '$', change: '+15%', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-purple-600 to-purple-400' },
             ].map((stat, i) => (
