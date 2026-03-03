@@ -94,7 +94,7 @@ export default function QuotesPage() {
       })
       
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({ error: 'Failed to fetch quotes' }))
+        const errData = await response.json().catch(() => ({ error: 'Failed to fetch quotes' })) as { error?: string }
         throw new Error(errData.error || 'Failed to fetch quotes')
       }
       

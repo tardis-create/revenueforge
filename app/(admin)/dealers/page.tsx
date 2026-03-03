@@ -71,7 +71,7 @@ export default function DealersPage() {
       const response = await authFetch('/api/dealers?limit=100')
       
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({ error: 'Failed to fetch dealers' }))
+        const errData = await response.json().catch(() => ({ error: 'Failed to fetch dealers' })) as { error?: string }
         throw new Error(errData.error || 'Failed to fetch dealers')
       }
       

@@ -40,7 +40,20 @@ export default function DealerLoginPage() {
         }),
       })
 
-      const data = await response.json()
+      const data = await response.json() as { 
+        error?: string; 
+        token?: string; 
+        jwt?: string; 
+        user?: { 
+          id?: string; 
+          email?: string; 
+          first_name?: string; 
+          last_name?: string; 
+          role?: string; 
+          company_name?: string 
+        }; 
+        user_id?: string 
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Invalid email or password')
