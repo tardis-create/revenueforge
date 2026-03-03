@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   BlurText, 
   AnimatedContent, 
@@ -10,6 +10,7 @@ import {
   GlareHover,
   CountUp
 } from '@/app/components'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Order {
   id: string
@@ -23,100 +24,58 @@ interface Order {
   paymentStatus: 'paid' | 'pending' | 'refunded'
 }
 
+interface ApiOrder {
+  id: string
+  product_name?: string
+  customer_name?: string
+  customer_email?: string
+  amount: number
+  commission: number
+  status: 'pending' | 'processing' | 'completed' | 'cancelled'
+  created_at: string
+  payment_status: 'paid' | 'pending' | 'refunded'
+}
+
 export default function DealerOrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [orders] = useState<Order[]>([
-    {
-      id: 'ORD-001',
-      product: 'Enterprise Analytics Suite',
-      customer: 'TechCorp Inc.',
-      customerEmail: 'tech@techcorp.com',
-      amount: 4500,
-      commission: 450,
-      status: 'completed',
-      date: '2026-02-25',
-      paymentStatus: 'paid',
-    },
-    {
-      id: 'ORD-002',
-      product: 'Revenue Intelligence Platform',
-      customer: 'GrowthLabs',
-      customerEmail: 'hello@growthlabs.io',
-      amount: 3200,
-      commission: 320,
-      status: 'processing',
-      date: '2026-02-24',
-      paymentStatus: 'paid',
-    },
-    {
-      id: 'ORD-003',
-      product: 'Smart Automation Tools',
-      customer: 'DataDriven Co.',
-      customerEmail: 'info@datadriven.co',
-      amount: 2800,
-      commission: 280,
-      status: 'pending',
-      date: '2026-02-24',
-      paymentStatus: 'pending',
-    },
-    {
-      id: 'ORD-004',
-      product: 'Predictive Analytics Module',
-      customer: 'InnovateTech',
-      customerEmail: 'buy@innovatetech.com',
-      amount: 5100,
-      commission: 510,
-      status: 'completed',
-      date: '2026-02-23',
-      paymentStatus: 'paid',
-    },
-    {
-      id: 'ORD-005',
-      product: 'Team Collaboration Suite',
-      customer: 'StartupXYZ',
-      customerEmail: 'admin@startupxyz.io',
-      amount: 1900,
-      commission: 190,
-      status: 'processing',
-      date: '2026-02-22',
-      paymentStatus: 'paid',
-    },
-    {
-      id: 'ORD-006',
-      product: 'Customer Insights Dashboard',
-      customer: 'RetailMax',
-      customerEmail: 'ops@retailmax.com',
-      amount: 3000,
-      commission: 300,
-      status: 'completed',
-      date: '2026-02-21',
-      paymentStatus: 'paid',
-    },
-    {
-      id: 'ORD-007',
-      product: 'Financial Reporting Suite',
-      customer: 'FinanceFirst',
-      customerEmail: 'cfo@financefirst.com',
-      amount: 3400,
-      commission: 340,
-      status: 'cancelled',
-      date: '2026-02-20',
-      paymentStatus: 'refunded',
-    },
-    {
-      id: 'ORD-008',
-      product: 'Enterprise Analytics Suite',
-      customer: 'GlobalTech Solutions',
-      customerEmail: 'enterprise@globaltech.com',
-      amount: 4500,
-      commission: 450,
-      status: 'completed',
-      date: '2026-02-19',
-      paymentStatus: 'paid',
-    },
-  ])
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch(`${API_BASE_URL}/api/dealer/orders`)
+      const data = await response.json() as { success: boolean; data?: ApiOrder[]; error?: string }
+      
+      if (data.success && data.data) {
+        const mappedOrders: Order[] = data.data.map((order) => ({
+          id: order.id,
+          product: order.product_name || 'Unknown Product',
+          customer: order.customer_name || 'Unknown Customer',
+          customerEmail: order.customer_email || '',
+          amount: order.amount,
+          commission: order.commission,
+          status: order.status,
+          date: new Date(order.created_at).toISOString().split('T')[0],
+          paymentStatus: order.payment_status,
+        }))
+        setOrders(mappedOrders)
+      } else {
+        setError(data.error || 'Failed to load orders')
+      }
+    } catch (err) {
+      setError('Failed to load orders')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
 
   const statusFilters = [
     { value: 'all', label: 'All Orders' },
@@ -204,6 +163,41 @@ export default function DealerOrdersPage() {
             </div>
           </AnimatedContent>
 
+          {/* Error State */}
+          {error && (
+            <AnimatedContent>
+              <GlareHover glareColor="rgba(239, 68, 68, 0.2)" glareSize={300}>
+                <div className="py-12 text-center p-8 bg-red-900/20 border border-red-800/50 rounded-xl backdrop-blur-sm mb-6">
+                  <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-zinc-100 mb-2">Failed to load orders</h3>
+                  <p className="text-zinc-400 mb-4">{error}</p>
+                  <button
+                    onClick={fetchOrders}
+                    className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </GlareHover>
+            </AnimatedContent>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-5 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
+                  <div className="h-3 bg-zinc-800/50 rounded w-1/3 mb-2 animate-pulse" />
+                  <div className="h-8 bg-zinc-800/50 rounded w-1/2 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && (
+          <>
           {/* Stats Summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
@@ -346,6 +340,8 @@ export default function DealerOrdersPage() {
               </div>
             </GlareHover>
           </AnimatedContent>
+          </>
+          )}
         </main>
       </div>
     </div>

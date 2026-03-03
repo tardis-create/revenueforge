@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   BlurText, 
   AnimatedContent, 
@@ -10,6 +10,7 @@ import {
   GlareHover,
   CountUp
 } from '@/app/components'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Commission {
   id: string
@@ -22,79 +23,56 @@ interface Commission {
   paidDate?: string
 }
 
+interface ApiCommission {
+  id: string
+  order_id: string
+  product_name?: string
+  customer_name?: string
+  amount: number
+  status: 'pending' | 'approved' | 'paid'
+  created_at: string
+  paid_at?: string
+}
+
 export default function DealerCommissionsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [selectedStatus, setSelectedStatus] = useState('all')
+  const [commissions, setCommissions] = useState<Commission[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [commissions] = useState<Commission[]>([
-    {
-      id: 'COM-001',
-      orderId: 'ORD-001',
-      product: 'Enterprise Analytics Suite',
-      customer: 'TechCorp Inc.',
-      amount: 450,
-      status: 'paid',
-      date: '2026-02-25',
-      paidDate: '2026-02-28',
-    },
-    {
-      id: 'COM-002',
-      orderId: 'ORD-002',
-      product: 'Revenue Intelligence Platform',
-      customer: 'GrowthLabs',
-      amount: 320,
-      status: 'approved',
-      date: '2026-02-24',
-    },
-    {
-      id: 'COM-003',
-      orderId: 'ORD-003',
-      product: 'Smart Automation Tools',
-      customer: 'DataDriven Co.',
-      amount: 280,
-      status: 'pending',
-      date: '2026-02-24',
-    },
-    {
-      id: 'COM-004',
-      orderId: 'ORD-004',
-      product: 'Predictive Analytics Module',
-      customer: 'InnovateTech',
-      amount: 510,
-      status: 'paid',
-      date: '2026-02-23',
-      paidDate: '2026-02-26',
-    },
-    {
-      id: 'COM-005',
-      orderId: 'ORD-005',
-      product: 'Team Collaboration Suite',
-      customer: 'StartupXYZ',
-      amount: 190,
-      status: 'approved',
-      date: '2026-02-22',
-    },
-    {
-      id: 'COM-006',
-      orderId: 'ORD-006',
-      product: 'Customer Insights Dashboard',
-      customer: 'RetailMax',
-      amount: 300,
-      status: 'paid',
-      date: '2026-02-21',
-      paidDate: '2026-02-24',
-    },
-    {
-      id: 'COM-007',
-      orderId: 'ORD-008',
-      product: 'Enterprise Analytics Suite',
-      customer: 'GlobalTech Solutions',
-      amount: 450,
-      status: 'paid',
-      date: '2026-02-19',
-      paidDate: '2026-02-22',
-    },
-  ])
+  const fetchCommissions = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch(`${API_BASE_URL}/api/dealer/commissions`)
+      const data = await response.json() as { success: boolean; data?: ApiCommission[]; error?: string }
+      
+      if (data.success && data.data) {
+        const mappedCommissions: Commission[] = data.data.map((commission) => ({
+          id: commission.id,
+          orderId: commission.order_id,
+          product: commission.product_name || 'Unknown Product',
+          customer: commission.customer_name || 'Unknown Customer',
+          amount: commission.amount,
+          status: commission.status,
+          date: new Date(commission.created_at).toISOString().split('T')[0],
+          paidDate: commission.paid_at ? new Date(commission.paid_at).toISOString().split('T')[0] : undefined,
+        }))
+        setCommissions(mappedCommissions)
+      } else {
+        setError(data.error || 'Failed to load commissions')
+      }
+    } catch (err) {
+      setError('Failed to load commissions')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCommissions()
+  }, [])
 
   const periods = [
     { value: 'all', label: 'All Time' },
@@ -129,7 +107,7 @@ export default function DealerCommissionsPage() {
     pendingPayment: commissions.filter(c => c.status === 'approved').reduce((sum, c) => sum + c.amount, 0),
     awaitingApproval: commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0),
     totalCommissions: commissions.length,
-    averageCommission: commissions.reduce((sum, c) => sum + c.amount, 0) / commissions.length,
+    averageCommission: commissions.length > 0 ? commissions.reduce((sum, c) => sum + c.amount, 0) / commissions.length : 0,
   }
 
   const recentPayouts = commissions.filter(c => c.status === 'paid').slice(0, 3)
@@ -175,6 +153,45 @@ export default function DealerCommissionsPage() {
             </div>
           </AnimatedContent>
 
+          {/* Error State */}
+          {error && (
+            <AnimatedContent>
+              <GlareHover glareColor="rgba(239, 68, 68, 0.2)" glareSize={300}>
+                <div className="py-12 text-center p-8 bg-red-900/20 border border-red-800/50 rounded-xl backdrop-blur-sm mb-6">
+                  <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-zinc-100 mb-2">Failed to load commissions</h3>
+                  <p className="text-zinc-400 mb-4">{error}</p>
+                  <button
+                    onClick={fetchCommissions}
+                    className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </GlareHover>
+            </AnimatedContent>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-5 rounded-xl border border-zinc-800/50 bg-zinc-900/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 rounded-lg bg-zinc-800 animate-pulse" />
+                    <div className="h-3 w-12 bg-zinc-800 rounded animate-pulse" />
+                  </div>
+                  <div className="h-8 w-24 bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-3 w-16 bg-zinc-800 rounded mt-2 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && (
+          <>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
@@ -417,6 +434,8 @@ export default function DealerCommissionsPage() {
               </AnimatedContent>
             </div>
           </div>
+          </>
+          )}
         </main>
       </div>
     </div>

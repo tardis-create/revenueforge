@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   BlurText, 
   AnimatedContent, 
@@ -9,8 +9,11 @@ import {
   Magnet,
   ClickSpark,
   GlareHover,
-  SpotlightCard
+  SpotlightCard,
+  ErrorState,
+  CardSkeleton
 } from '@/app/components'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Product {
   id: string
@@ -24,94 +27,63 @@ interface Product {
   image?: string
 }
 
+interface ApiProduct {
+  id: string
+  name: string
+  description: string | null
+  category: string
+  price: number | null
+  stock: number | null
+}
+
 export default function DealerProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [products] = useState<Product[]>([
-    {
-      id: 'PROD-001',
-      name: 'Enterprise Analytics Suite',
-      description: 'Comprehensive analytics platform for large-scale data processing and visualization.',
-      category: 'Analytics',
-      retailPrice: 5999,
-      dealerPrice: 4500,
-      commission: 450,
-      inStock: true,
-    },
-    {
-      id: 'PROD-002',
-      name: 'Revenue Intelligence Platform',
-      description: 'AI-powered revenue forecasting and optimization tools.',
-      category: 'Intelligence',
-      retailPrice: 4299,
-      dealerPrice: 3200,
-      commission: 320,
-      inStock: true,
-    },
-    {
-      id: 'PROD-003',
-      name: 'Smart Automation Tools',
-      description: 'Automate repetitive tasks with intelligent workflow engines.',
-      category: 'Automation',
-      retailPrice: 3499,
-      dealerPrice: 2800,
-      commission: 280,
-      inStock: true,
-    },
-    {
-      id: 'PROD-004',
-      name: 'Predictive Analytics Module',
-      description: 'Machine learning models for predictive business insights.',
-      category: 'Analytics',
-      retailPrice: 6799,
-      dealerPrice: 5100,
-      commission: 510,
-      inStock: true,
-    },
-    {
-      id: 'PROD-005',
-      name: 'Team Collaboration Suite',
-      description: 'Unified workspace for cross-team alignment and communication.',
-      category: 'Collaboration',
-      retailPrice: 2499,
-      dealerPrice: 1900,
-      commission: 190,
-      inStock: true,
-    },
-    {
-      id: 'PROD-006',
-      name: 'Customer Insights Dashboard',
-      description: 'Real-time customer behavior analytics and segmentation.',
-      category: 'Analytics',
-      retailPrice: 3999,
-      dealerPrice: 3000,
-      commission: 300,
-      inStock: true,
-    },
-    {
-      id: 'PROD-007',
-      name: 'Sales Pipeline Manager',
-      description: 'End-to-end sales pipeline tracking and optimization.',
-      category: 'Intelligence',
-      retailPrice: 2999,
-      dealerPrice: 2200,
-      commission: 220,
-      inStock: false,
-    },
-    {
-      id: 'PROD-008',
-      name: 'Financial Reporting Suite',
-      description: 'Automated financial reports and compliance documentation.',
-      category: 'Reporting',
-      retailPrice: 4499,
-      dealerPrice: 3400,
-      commission: 340,
-      inStock: true,
-    },
-  ])
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch(`${API_BASE_URL}/api/products`)
+      const data = await response.json() as { success: boolean; data?: ApiProduct[]; error?: string }
+      
+      if (data.success && data.data) {
+        // Map API response to component interface
+        const mappedProducts: Product[] = data.data.map((product) => {
+          const retailPrice = product.price || 0
+          const dealerPrice = Math.round(retailPrice * 0.75) // 25% discount for dealers
+          const commission = Math.round(dealerPrice * 0.10) // 10% commission
+          
+          return {
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            category: product.category,
+            retailPrice,
+            dealerPrice,
+            commission,
+            inStock: (product.stock || 0) > 0,
+          }
+        })
+        setProducts(mappedProducts)
+      } else {
+        setError(data.error || 'Failed to load products')
+      }
+    } catch (err) {
+      setError('Failed to load products')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const categories = ['all', 'Analytics', 'Intelligence', 'Automation', 'Collaboration', 'Reporting']
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const categories = ['all', 'Sensors', 'Controllers', 'Measurement', 'Safety', 'Analysis', 'Actuators', 'Communication', 'Power']
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -165,7 +137,46 @@ export default function DealerProductsPage() {
             </div>
           </AnimatedContent>
 
+          {/* Error State */}
+          {error && (
+            <AnimatedContent>
+              <GlareHover glareColor="rgba(239, 68, 68, 0.2)" glareSize={300}>
+                <div className="py-12 text-center p-8 bg-red-900/20 border border-red-800/50 rounded-xl backdrop-blur-sm mb-6">
+                  <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-zinc-100 mb-2">Failed to load products</h3>
+                  <p className="text-zinc-400 mb-4">{error}</p>
+                  <button
+                    onClick={fetchProducts}
+                    className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </GlareHover>
+            </AnimatedContent>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
+                  <div className="h-40 bg-zinc-800/50 animate-pulse" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-4 bg-zinc-800/50 rounded w-1/3 animate-pulse" />
+                    <div className="h-5 bg-zinc-800/50 rounded w-3/4 animate-pulse" />
+                    <div className="h-4 bg-zinc-800/50 rounded w-full animate-pulse" />
+                    <div className="h-10 bg-zinc-800/50 rounded mt-4 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Filters */}
+          {!loading && !error && (
           <AnimatedContent delay={0.1}>
             <GlareHover glareColor="rgba(168, 85, 247, 0.1)" glareSize={300}>
               <div className="p-4 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm mb-6">
@@ -204,8 +215,10 @@ export default function DealerProductsPage() {
               </div>
             </GlareHover>
           </AnimatedContent>
+          )}
 
           {/* Products Grid */}
+          {!loading && !error && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredProducts.map((product, i) => (
               <AnimatedContent key={product.id} delay={0.05 * (i % 3)}>
@@ -270,9 +283,10 @@ export default function DealerProductsPage() {
               </AnimatedContent>
             ))}
           </div>
+          )}
 
           {/* Empty State */}
-          {filteredProducts.length === 0 && (
+          {!loading && !error && filteredProducts.length === 0 && (
             <AnimatedContent>
               <GlareHover glareColor="rgba(168, 85, 247, 0.2)" glareSize={300}>
                 <div className="py-16 text-center p-8 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
@@ -287,6 +301,7 @@ export default function DealerProductsPage() {
           )}
 
           {/* Summary Footer */}
+          {!loading && !error && (
           <AnimatedContent delay={0.3}>
             <div className="mt-8 bg-gradient-to-br from-zinc-900 to-zinc-800 border border-zinc-800/50 rounded-xl p-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -303,6 +318,7 @@ export default function DealerProductsPage() {
               </div>
             </div>
           </AnimatedContent>
+          )}
         </main>
       </div>
     </div>
