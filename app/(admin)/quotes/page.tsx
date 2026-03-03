@@ -65,116 +65,83 @@ export default function QuotesPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const API_BASE_URL = 'https://revenueforge-api.pronitopenclaw.workers.dev'
+
+  // Get auth token from localStorage
+  function getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('auth_token');
+  }
+
+  const fetchQuotes = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const token = getAuthToken()
+      const url = filterStatus === 'all' 
+        ? `${API_BASE_URL}/api/quotes?limit=100`
+        : `${API_BASE_URL}/api/quotes?status=${filterStatus}&limit=100`
+      
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      })
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: 'Failed to fetch quotes' }))
+        throw new Error(errData.error || 'Failed to fetch quotes')
+      }
+      
+      const data = await response.json() as { data: any[] }
+      
+      // Map API response to Quote interface
+      const mappedQuotes: Quote[] = (data.data || []).map((quote: any) => ({
+        id: quote.id,
+        rfq_id: quote.rfq_id,
+        company_name: quote.company_name || 'N/A',
+        contact_person: quote.contact_person || 'N/A',
+        email: quote.email || 'N/A',
+        phone: quote.phone || 'N/A',
+        status: quote.status || 'draft',
+        subtotal: quote.subtotal || 0,
+        tax_rate: quote.tax_rate || 18,
+        tax_amount: quote.tax_amount || 0,
+        total_amount: quote.total_amount || 0,
+        valid_until: quote.valid_until || '',
+        created_at: quote.created_at ? new Date(quote.created_at).toISOString().split('T')[0] : '',
+        terms: quote.terms || DEFAULT_TERMS,
+        notes: quote.notes || '',
+        items: (quote.items || []).map((item: any, idx: number) => ({
+          id: item.id || `item-${idx}`,
+          product_id: item.product_id || '',
+          product_name: item.description || 'Product',
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || 0,
+          discount_percent: 0,
+          discount_amount: 0,
+          total: item.total_price || 0,
+        })),
+      }))
+      
+      setQuotes(mappedQuotes)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to fetch quotes')
+      setError(error.message)
+      console.error('Error fetching quotes:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockQuotes: Quote[] = [
-      {
-        id: 'QT-001',
-        rfq_id: 'RFQ-2026-001',
-        company_name: 'TechCorp Industries',
-        contact_person: 'Sarah Chen',
-        email: 'sarah@techcorp.com',
-        phone: '+1-555-0123',
-        status: 'sent',
-        subtotal: 23000,
-        tax_rate: 18,
-        tax_amount: 4140,
-        total_amount: 27140,
-        valid_until: '2026-03-15',
-        created_at: '2026-02-20',
-        terms: DEFAULT_TERMS,
-        notes: 'Customer requested expedited shipping.',
-        items: [
-          { id: '1', product_id: 'p1', product_name: 'Industrial Pump Assembly', quantity: 5, unit_price: 4500, discount_percent: 0, discount_amount: 0, total: 22500 },
-          { id: '2', product_id: 'p2', product_name: 'Installation Kit', quantity: 5, unit_price: 400, discount_percent: 25, discount_amount: 100, total: 1500 },
-        ]
-      },
-      {
-        id: 'QT-002',
-        rfq_id: 'RFQ-2026-002',
-        company_name: 'BuildRight Construction',
-        contact_person: 'Mike Johnson',
-        email: 'mike@buildright.com',
-        phone: '+1-555-0456',
-        status: 'accepted',
-        subtotal: 17500,
-        tax_rate: 18,
-        tax_amount: 3150,
-        total_amount: 20650,
-        valid_until: '2026-03-10',
-        created_at: '2026-02-18',
-        terms: DEFAULT_TERMS,
-        notes: '',
-        items: [
-          { id: '1', product_id: 'p3', product_name: 'Heavy Duty Valve Set', quantity: 25, unit_price: 750, discount_percent: 7, discount_amount: 52.5, total: 17500 },
-        ]
-      },
-      {
-        id: 'QT-003',
-        rfq_id: null,
-        company_name: 'AquaFlow Systems',
-        contact_person: 'Linda Park',
-        email: 'linda@aquaflow.com',
-        phone: '+1-555-0789',
-        status: 'draft',
-        subtotal: 30000,
-        tax_rate: 18,
-        tax_amount: 5400,
-        total_amount: 35400,
-        valid_until: '2026-03-20',
-        created_at: '2026-02-25',
-        terms: DEFAULT_TERMS,
-        notes: 'Waiting for customer confirmation on specifications.',
-        items: [
-          { id: '1', product_id: 'p4', product_name: 'Centrifugal Pump System', quantity: 2, unit_price: 15000, discount_percent: 0, discount_amount: 0, total: 30000 },
-        ]
-      },
-      {
-        id: 'QT-004',
-        rfq_id: 'RFQ-2026-004',
-        company_name: 'EnergyPlus Ltd',
-        contact_person: 'David Kim',
-        email: 'david@energyplus.com',
-        phone: '+1-555-0321',
-        status: 'rejected',
-        subtotal: 8900,
-        tax_rate: 18,
-        tax_amount: 1602,
-        total_amount: 10502,
-        valid_until: '2026-02-28',
-        created_at: '2026-02-15',
-        terms: DEFAULT_TERMS,
-        notes: 'Customer chose a competitor due to price.',
-        items: [
-          { id: '1', product_id: 'p5', product_name: 'Motor Assembly Unit', quantity: 10, unit_price: 890, discount_percent: 0, discount_amount: 0, total: 8900 },
-        ]
-      },
-      {
-        id: 'QT-005',
-        rfq_id: null,
-        company_name: 'Global Manufacturing Co',
-        contact_person: 'Emma Wilson',
-        email: 'emma@globalmfg.com',
-        phone: '+1-555-0654',
-        status: 'expired',
-        subtotal: 12000,
-        tax_rate: 18,
-        tax_amount: 2160,
-        total_amount: 14160,
-        valid_until: '2026-02-20',
-        created_at: '2026-02-01',
-        terms: DEFAULT_TERMS,
-        notes: 'Quote expired without response.',
-        items: [
-          { id: '1', product_id: 'p6', product_name: 'Control Panel Module', quantity: 4, unit_price: 3000, discount_percent: 0, discount_amount: 0, total: 12000 },
-        ]
-      },
-    ]
-    
-    setQuotes(mockQuotes)
-    setLoading(false)
-  }, [])
+    fetchQuotes()
+  }, [filterStatus])
 
   const filteredQuotes = filterStatus === 'all' 
     ? quotes 
