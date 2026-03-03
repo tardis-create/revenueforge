@@ -11,6 +11,8 @@ import {
   GlareHover,
   CountUp
 } from '@/app/components'
+import { useAuth } from '@/lib/auth-context'
+import { API_BASE_URL } from '@/lib/api'
 
 interface DashboardStats {
   totalOrders: number
@@ -30,21 +32,145 @@ interface RecentOrder {
 }
 
 export default function DealerDashboard() {
-  const [stats] = useState<DashboardStats>({
-    totalOrders: 47,
-    pendingOrders: 8,
-    totalRevenue: 128450,
-    totalCommission: 12845,
-    activeProducts: 24,
-  })
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [recentOrders] = useState<RecentOrder[]>([
-    { id: 'ORD-001', product: 'Enterprise Analytics Suite', customer: 'TechCorp Inc.', amount: 4500, status: 'completed', date: '2026-02-25' },
-    { id: 'ORD-002', product: 'Revenue Intelligence Platform', customer: 'GrowthLabs', amount: 3200, status: 'processing', date: '2026-02-24' },
-    { id: 'ORD-003', product: 'Smart Automation Tools', customer: 'DataDriven Co.', amount: 2800, status: 'pending', date: '2026-02-24' },
-    { id: 'ORD-004', product: 'Predictive Analytics Module', customer: 'InnovateTech', amount: 5100, status: 'completed', date: '2026-02-23' },
-    { id: 'ORD-005', product: 'Team Collaboration Suite', customer: 'StartupXYZ', amount: 1900, status: 'processing', date: '2026-02-22' },
-  ])
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!isAuthenticated || authLoading) return
+      
+      try {
+        setIsLoading(true)
+        setError(null)
+        
+        const token = localStorage.getItem('auth_token')
+        
+        // Fetch orders
+        const ordersRes = await fetch(`${API_BASE_URL}/api/dealer/orders?limit=5`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        })
+        
+        // Fetch commissions
+        const commissionsRes = await fetch(`${API_BASE_URL}/api/dealer/commissions?limit=100`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        })
+        
+        if (!ordersRes.ok) {
+          throw new Error('Failed to fetch orders')
+        }
+        
+        const ordersData = await ordersRes.json() as any
+        const orders = ordersData.data || []
+        
+        // Calculate stats from orders
+        const totalOrders = orders.length
+        const pendingOrders = orders.filter((o: any) => o.status === 'pending').length
+        const totalRevenue = orders.reduce((sum: number, o: any) => sum + (parseFloat(o.amount) || 0), 0)
+        
+        // Calculate commissions
+        let totalCommission = 0
+        if (commissionsRes.ok) {
+          const commissionsData = await commissionsRes.json() as any
+          const commissions = commissionsData.data || []
+          totalCommission = commissions
+            .filter((c: any) => c.status === 'paid' || c.status === 'approved')
+            .reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
+        }
+        
+        // Transform orders for display
+        const transformedOrders: RecentOrder[] = orders.slice(0, 5).map((order: any) => ({
+          id: order.id || `ORD-${Date.now()}`,
+          product: order.product_name || order.product || 'Product',
+          customer: order.customer_name || order.customer || 'Customer',
+          amount: parseFloat(order.amount) || 0,
+          status: order.status || 'pending',
+          date: order.created_at ? new Date(order.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        }))
+        
+        setStats({
+          totalOrders,
+          pendingOrders,
+          totalRevenue,
+          totalCommission,
+          activeProducts: 24, // Could fetch from products API
+        })
+        
+        setRecentOrders(transformedOrders)
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchDashboardData()
+  }, [isAuthenticated, authLoading])
+
+  // Show loading state
+  if (authLoading || isLoading) {
+    return (
+      <div className="relative min-h-screen overflow-hidden">
+        <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-zinc-400 text-sm">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="relative min-h-screen overflow-hidden">
+        <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="flex flex-col items-center gap-4 p-6 bg-zinc-900/60 border border-zinc-800/50 rounded-xl backdrop-blur-sm">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <p className="text-zinc-400 text-sm">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback if stats not loaded yet
+  const displayStats = stats || {
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalRevenue: 0,
+    totalCommission: 0,
+    activeProducts: 0,
+  }
+
+  const displayOrders = recentOrders.length > 0 ? recentOrders : [
+    { id: 'N/A', product: 'No orders yet', customer: '-', amount: 0, status: 'pending' as const, date: '-' },
+  ]
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -99,10 +225,10 @@ export default function DealerDashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Total Orders', value: stats.totalOrders, change: '+12%', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'from-blue-600 to-blue-400' },
-              { label: 'Pending Orders', value: stats.pendingOrders, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-amber-600 to-amber-400' },
-              { label: 'Total Revenue', value: stats.totalRevenue, prefix: '$', change: '+18%', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-600 to-emerald-400' },
-              { label: 'Your Commission', value: stats.totalCommission, prefix: '$', change: '+15%', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-purple-600 to-purple-400' },
+              { label: 'Total Orders', value: displayStats.totalOrders, change: '+12%', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'from-blue-600 to-blue-400' },
+              { label: 'Pending Orders', value: displayStats.pendingOrders, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-amber-600 to-amber-400' },
+              { label: 'Total Revenue', value: displayStats.totalRevenue, prefix: '$', change: '+18%', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-600 to-emerald-400' },
+              { label: 'Your Commission', value: displayStats.totalCommission, prefix: '$', change: '+15%', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-purple-600 to-purple-400' },
             ].map((stat, i) => (
               <AnimatedContent key={stat.label} delay={0.05 * i}>
                 <GlareHover glareColor="rgba(168, 85, 247, 0.15)" glareSize={200}>
@@ -157,7 +283,7 @@ export default function DealerDashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
-                          {recentOrders.map((order) => (
+                          {displayOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-zinc-800/20 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="text-sm font-medium text-zinc-100">{order.id}</div>
@@ -205,7 +331,7 @@ export default function DealerDashboard() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-zinc-100">Browse Products</div>
-                          <div className="text-xs text-zinc-500">{stats.activeProducts} products available</div>
+                          <div className="text-xs text-zinc-500">{displayStats.activeProducts} products available</div>
                         </div>
                       </Link>
                       <Link href="/dealer/orders"
@@ -218,7 +344,7 @@ export default function DealerDashboard() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-zinc-100">View Orders</div>
-                          <div className="text-xs text-zinc-500">{stats.pendingOrders} pending orders</div>
+                          <div className="text-xs text-zinc-500">{displayStats.pendingOrders} pending orders</div>
                         </div>
                       </Link>
                       <Link href="/dealer/commissions"
@@ -231,7 +357,7 @@ export default function DealerDashboard() {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-zinc-100">Track Commissions</div>
-                          <div className="text-xs text-zinc-500">${stats.totalCommission.toLocaleString()} earned</div>
+                          <div className="text-xs text-zinc-500">${displayStats.totalCommission.toLocaleString()} earned</div>
                         </div>
                       </Link>
                     </div>
@@ -246,20 +372,20 @@ export default function DealerDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-zinc-400 text-sm">Orders Placed</span>
-                      <span className="font-semibold text-zinc-100">23</span>
+                      <span className="font-semibold text-zinc-100">{displayStats.totalOrders}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-zinc-400 text-sm">Revenue Generated</span>
-                      <span className="font-semibold text-zinc-100">$45,200</span>
+                      <span className="font-semibold text-zinc-100">${displayStats.totalRevenue.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-zinc-400 text-sm">Commission Earned</span>
-                      <span className="font-semibold text-emerald-400">$4,520</span>
+                      <span className="font-semibold text-emerald-400">${displayStats.totalCommission.toLocaleString()}</span>
                     </div>
                     <div className="pt-4 border-t border-zinc-700">
                       <div className="flex justify-between items-center">
                         <span className="text-zinc-400 text-sm">Conversion Rate</span>
-                        <span className="font-semibold text-zinc-100">68%</span>
+                        <span className="font-semibold text-zinc-100">{displayStats.totalOrders > 0 ? Math.round((displayStats.totalOrders - displayStats.pendingOrders) / displayStats.totalOrders * 100) : 0}%</span>
                       </div>
                     </div>
                   </div>
