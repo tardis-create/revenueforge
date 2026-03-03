@@ -136,13 +136,22 @@ function InviteUserModal({ isOpen, onClose, onSuccess }: {
 
     try {
       const token = getAuthToken()
+      
+      // Combine first_name and last_name into name for backend
+      const payload = {
+        email: formData.email,
+        name: [formData.first_name, formData.last_name].filter(Boolean).join(' ').trim() || formData.first_name,
+        role: formData.role,
+        password: formData.password
+      }
+      
       const response = await fetch(`${API_BASE_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
 
       const data = await response.json() as { error?: string; success?: boolean }
