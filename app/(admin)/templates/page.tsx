@@ -6,6 +6,7 @@ import {
   AnimatedContent,
   GlareHover
 } from '@/app/components'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Template {
   id: string
@@ -18,73 +19,66 @@ interface Template {
   lastUsed: string
 }
 
+interface ApiTemplate {
+  id: string
+  name: string
+  subject: string
+  description: string | null
+  body?: string
+  variables: string[]
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<string>('all')
 
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch(`${API_BASE_URL}/api/templates`)
+      const data = await response.json() as { templates?: ApiTemplate[]; error?: string }
+      
+      if (data.templates && Array.isArray(data.templates)) {
+        const mappedTemplates: Template[] = data.templates.map((template) => ({
+          id: template.id,
+          name: template.name,
+          type: 'email' as const, // API doesn't have type, default to email
+          subject: template.subject,
+          content: template.body || template.description || '',
+          variables: template.variables || [],
+          isActive: template.is_active,
+          lastUsed: template.updated_at ? new Date(template.updated_at).toISOString().split('T')[0] : 
+                      template.created_at ? new Date(template.created_at).toISOString().split('T')[0] : '-',
+        }))
+        setTemplates(mappedTemplates)
+      } else {
+        setError(data.error || 'Failed to load templates')
+      }
+    } catch (err) {
+      console.error('Error fetching templates:', err)
+      setError('Failed to load templates')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    // Mock data
-    const mockTemplates: Template[] = [
-      {
-        id: 'TMP-001',
-        name: 'Welcome Email',
-        type: 'email',
-        subject: 'Welcome to {{company_name}}',
-        content: 'Dear {{customer_name}},\n\nWelcome to our platform...',
-        variables: ['company_name', 'customer_name'],
-        isActive: true,
-        lastUsed: '2026-02-25',
-      },
-      {
-        id: 'TMP-002',
-        name: 'Quote Follow-up',
-        type: 'email',
-        subject: 'Follow-up: Quote {{quote_id}}',
-        content: 'Dear {{contact_name}},\n\nI hope this email finds you well...',
-        variables: ['contact_name', 'quote_id'],
-        isActive: true,
-        lastUsed: '2026-02-24',
-      },
-      {
-        id: 'TMP-003',
-        name: 'Standard Quote',
-        type: 'quote',
-        subject: 'Quotation {{quote_id}} - {{company_name}}',
-        content: 'Quote template with standard terms...',
-        variables: ['quote_id', 'company_name', 'total_amount'],
-        isActive: true,
-        lastUsed: '2026-02-26',
-      },
-      {
-        id: 'TMP-004',
-        name: 'RFQ Response',
-        type: 'rfq_response',
-        subject: 'Re: RFQ {{rfq_id}}',
-        content: 'Thank you for your RFQ. Here is our response...',
-        variables: ['rfq_id', 'customer_name'],
-        isActive: true,
-        lastUsed: '2026-02-23',
-      },
-      {
-        id: 'TMP-005',
-        name: 'Invoice Template',
-        type: 'invoice',
-        subject: 'Invoice {{invoice_id}}',
-        content: 'Invoice details...',
-        variables: ['invoice_id', 'order_id', 'total_amount'],
-        isActive: false,
-        lastUsed: '2026-02-20',
-      },
-    ]
-    
-    setTemplates(mockTemplates)
-    setLoading(false)
+    fetchTemplates()
   }, [])
 
   const filteredTemplates = filterType === 'all' 
     ? templates 
-    : templates.filter(t => t.type === filterType)
+    : filterType === 'active'
+      ? templates.filter(t => t.isActive)
+      : filterType === 'inactive'
+        ? templates.filter(t => !t.isActive)
+        : templates
 
   const getTypeBadge = (type: string) => {
     const styles: Record<string, string> = {
@@ -106,10 +100,37 @@ export default function TemplatesPage() {
     return icons[type]
   }
 
-  const toggleActive = (id: string) => {
+  const toggleActive = async (id: string) => {
+    const template = templates.find(t => t.id === id)
+    if (!template) return
+    
+    // Optimistic update
     setTemplates(templates.map(t => 
       t.id === id ? { ...t, isActive: !t.isActive } : t
     ))
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/templates/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_active: !template.isActive }),
+      })
+      
+      if (!response.ok) {
+        // Revert on failure
+        setTemplates(templates.map(t => 
+          t.id === id ? { ...t, isActive: !t.isActive } : t
+        ))
+      }
+    } catch (err) {
+      console.error('Error toggling template:', err)
+      // Revert on failure
+      setTemplates(templates.map(t => 
+        t.id === id ? { ...t, isActive: !t.isActive } : t
+      ))
+    }
   }
 
   return (
@@ -138,19 +159,18 @@ export default function TemplatesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'All Templates', value: templates.length },
-          { label: 'Email', value: templates.filter(t => t.type === 'email').length },
-          { label: 'Quote', value: templates.filter(t => t.type === 'quote').length },
-          { label: 'RFQ Response', value: templates.filter(t => t.type === 'rfq_response').length },
-          { label: 'Invoice', value: templates.filter(t => t.type === 'invoice').length },
+          { label: 'Active', value: templates.filter(t => t.isActive).length },
+          { label: 'Inactive', value: templates.filter(t => !t.isActive).length },
+          { label: 'Total Variables', value: templates.reduce((sum, t) => sum + t.variables.length, 0) },
         ].map((stat, i) => (
           <AnimatedContent key={stat.label} delay={0.05 * i}>
             <button
-              onClick={() => setFilterType(stat.label.toLowerCase().replace(' ', '_').replace('all_templates', 'all'))}
+              onClick={() => setFilterType(stat.label.toLowerCase() === 'all templates' ? 'all' : stat.label.toLowerCase())}
               className={`w-full p-4 bg-zinc-900/60 border rounded-xl backdrop-blur-sm transition-all text-left ${
-                filterType === stat.label.toLowerCase().replace(' ', '_').replace('all_templates', 'all')
+                filterType === (stat.label.toLowerCase() === 'all templates' ? 'all' : stat.label.toLowerCase())
                   ? 'border-purple-500/50 bg-purple-600/10'
                   : 'border-zinc-800/50 hover:border-zinc-600/50'
               }`}
@@ -163,7 +183,25 @@ export default function TemplatesPage() {
       </div>
 
       {/* Templates Grid */}
-      {loading ? (
+      {error ? (
+        <AnimatedContent>
+          <GlareHover glareColor="rgba(239, 68, 68, 0.2)" glareSize={300}>
+            <div className="py-12 text-center p-8 bg-red-900/20 border border-red-800/50 rounded-xl backdrop-blur-sm mb-6">
+              <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 className="text-lg font-medium text-zinc-100 mb-2">Failed to load templates</h3>
+              <p className="text-zinc-400 mb-4">{error}</p>
+              <button
+                onClick={fetchTemplates}
+                className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </GlareHover>
+        </AnimatedContent>
+      ) : loading ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
         </div>
