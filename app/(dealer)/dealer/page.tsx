@@ -241,10 +241,10 @@ export default function DealerDashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Total Orders', value: displayStats.totalOrders, change: '+12%', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'from-blue-600 to-blue-400' },
+              { label: 'Total Orders', value: displayStats.totalOrders, icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'from-blue-600 to-blue-400' },
               { label: 'Pending Orders', value: displayStats.pendingOrders, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-amber-600 to-amber-400' },
-              { label: 'Total Revenue', value: displayStats.totalRevenue, prefix: '$', change: '+18%', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-600 to-emerald-400' },
-              { label: 'Your Commission', value: displayStats.totalCommission, prefix: '$', change: '+15%', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-purple-600 to-purple-400' },
+              { label: 'Total Revenue', value: displayStats.totalRevenue, prefix: '$', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-600 to-emerald-400' },
+              { label: 'Your Commission', value: displayStats.totalCommission, prefix: '$', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', color: 'from-purple-600 to-purple-400' },
             ].map((stat, i) => (
               <AnimatedContent key={stat.label} delay={0.05 * i}>
                 <GlareHover glareColor="rgba(168, 85, 247, 0.15)" glareSize={200}>
@@ -255,11 +255,6 @@ export default function DealerDashboard() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
                         </svg>
                       </div>
-                      {stat.change && (
-                        <span className="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                          {stat.change}
-                        </span>
-                      )}
                     </div>
                     <div className="text-2xl font-bold text-zinc-100">
                       {stat.prefix && <span className="text-zinc-500">{stat.prefix}</span>}
