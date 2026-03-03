@@ -48,11 +48,11 @@ export default function DealerProductsPage() {
       setLoading(true)
       setError(null)
       const response = await fetch(`${API_BASE_URL}/api/products`)
-      const data = await response.json() as { success: boolean; data?: ApiProduct[]; error?: string }
+      const data = await response.json() as { products?: ApiProduct[]; error?: string }
       
-      if (data.success && data.data) {
+      if (data.products && Array.isArray(data.products)) {
         // Map API response to component interface
-        const mappedProducts: Product[] = data.data.map((product) => {
+        const mappedProducts: Product[] = data.products.map((product) => {
           const retailPrice = product.price || 0
           const dealerPrice = Math.round(retailPrice * 0.75) // 25% discount for dealers
           const commission = Math.round(dealerPrice * 0.10) // 10% commission

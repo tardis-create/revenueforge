@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
   BlurText, 
@@ -11,6 +12,15 @@ import {
   ClickSpark,
   GlareHover
 } from '@/app/components';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  category: string;
+  in_stock: number;
+}
 
 interface FormData {
   companyName: string;
@@ -48,11 +58,35 @@ const initialFormData: FormData = {
 };
 
 export default function RFQForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [prefilledProduct, setPrefilledProduct] = useState<Product | null>(null);
+
+  // Fetch product and pre-fill form if ?product= param is present
+  useEffect(() => {
+    const productId = searchParams.get('product');
+    if (productId) {
+      fetch(`${API_BASE_URL}/api/products/${productId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to fetch');
+          return res.json() as Promise<{ product: Product }>;
+        })
+        .then((data) => {
+          const product = data.product;
+          setPrefilledProduct(product);
+          // Pre-fill product requirements with product info
+          setFormData(prev => ({
+            ...prev,
+            productRequirements: `Product: ${product.name}\nCategory: ${product.category}\nPrice: $${product.price}\n${product.description || ''}`
+          }));
+        })
+        .catch(err => console.error('Failed to fetch product:', err));
+    }
+  }, [searchParams]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -220,6 +254,24 @@ export default function RFQForm() {
                               </svg>
                             </div>
                             <p className="text-red-400 font-medium text-sm">{errorMessage}</p>
+                          </div>
+                        </div>
+                      </FadeContent>
+                    )}
+
+                    {/* Pre-filled Product Indicator */}
+                    {prefilledProduct && (
+                      <FadeContent>
+                        <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <p className="text-purple-400 font-medium text-sm">
+                              Pre-filled with: <span className="text-purple-300">{prefilledProduct.name}</span> ({prefilledProduct.category})
+                            </p>
                           </div>
                         </div>
                       </FadeContent>
