@@ -12,6 +12,7 @@ import leads from './routes/leads';
 import auditLog from './routes/auditLog';
 import auth from './routes/auth';
 import notifications from './routes/notifications';
+import dealer from './routes/dealer';
 
 // Create Hono app
 const app = new Hono();
@@ -51,6 +52,7 @@ app.route('/api/upload', upload);
 app.route('/api/audit-log', auditLog);
 app.route('/api/auth', auth);
 app.route('/api/notifications', notifications);
+app.route('/api/dealer', dealer);
 
 app.notFound((c) => {
   return c.json({ error: 'Not Found' }, 404);
