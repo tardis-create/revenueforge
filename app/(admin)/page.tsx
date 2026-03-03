@@ -30,10 +30,10 @@ export default function AdminDashboardPage() {
       fetch(`${API_BASE_URL}/api/users`, { headers: h }).then(r => r.json()).catch(() => ({})),
     ]).then((results: unknown[]) => {
       const [prods, rfqs, leads, quotes, users] = results as any[]
-      const productList = prods.products || prods.data || (Array.isArray(prods) ? prods : [])
+      const productList = prods.data || prods.products || (Array.isArray(prods) ? prods : [])
       const rfqList = rfqs.rfqs || rfqs.data || (Array.isArray(rfqs) ? rfqs : [])
       const leadList = leads.leads || leads.data || (Array.isArray(leads) ? leads : [])
-      const quoteList = quotes.quotes || quotes.data || (Array.isArray(quotes) ? quotes : [])
+      const quoteList = (quotes.success ? quotes.data : null) || quotes.quotes || (Array.isArray(quotes) ? quotes : [])
       const userList = users.users || users.data || (Array.isArray(users) ? users : [])
       setStats({
         products: productList.length,

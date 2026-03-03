@@ -17,7 +17,7 @@ export default function AnalyticsPage() {
       fetch(`${API_BASE_URL}/api/products`).then(r => r.json()).catch(() => ({})),
     ]).then(([q, l, p]: any[]) => {
       setData({
-        quotes: q.success ? q.data : [],
+        quotes: q.success ? q.data : (Array.isArray(q) ? q : []),
         leads: l.leads || [],
         products: p.products || [],
       })
