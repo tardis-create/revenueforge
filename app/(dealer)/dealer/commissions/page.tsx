@@ -45,7 +45,14 @@ export default function DealerCommissionsPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${API_BASE_URL}/api/dealer/commissions`)
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`${API_BASE_URL}/api/dealer/commissions`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      })
       const data = await response.json() as { success: boolean; data?: ApiCommission[]; error?: string }
       
       if (data.success && data.data) {

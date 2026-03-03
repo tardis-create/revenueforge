@@ -47,7 +47,14 @@ export default function DealerOrdersPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${API_BASE_URL}/api/dealer/orders`)
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`${API_BASE_URL}/api/dealer/orders`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      })
       const data = await response.json() as { success: boolean; data?: ApiOrder[]; error?: string }
       
       if (data.success && data.data) {
