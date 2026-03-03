@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
   BlurText, 
@@ -35,6 +36,19 @@ interface FormErrors {
   deliveryTimeline?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  industry: string;
+  description: string | null;
+  technical_specs: Record<string, string> | null;
+  price_range: string | null;
+  price: number | null;
+  image_url: string | null;
+}
+
 const initialFormData: FormData = {
   companyName: "",
   contactPerson: "",
@@ -48,11 +62,45 @@ const initialFormData: FormData = {
 };
 
 export default function RFQForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadingProduct, setLoadingProduct] = useState(false);
+  const [productData, setProductData] = useState<Product | null>(null);
+
+  // Fetch product details if product query param is present
+  useEffect(() => {
+    const productId = searchParams.get("product");
+    if (!productId) return;
+
+    const fetchProduct = async () => {
+      setLoadingProduct(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
+        const data = await response.json() as { success: boolean; data?: Product };
+        
+        if (data.success && data.data) {
+          const product = data.data;
+          setProductData(product);
+          
+          // Pre-fill form with product details
+          setFormData((prev) => ({
+            ...prev,
+            productRequirements: `Product: ${product.name}\nSKU: ${product.sku}\nCategory: ${product.category}\nIndustry: ${product.industry}${product.description ? `\n\nDescription: ${product.description}` : ''}${product.price_range ? `\nPrice Range: ${product.price_range}` : ''}`,
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    fetchProduct();
+  }, [searchParams]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
