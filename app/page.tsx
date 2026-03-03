@@ -64,7 +64,7 @@ export default function Home() {
               Request Quote
             </Link>
             <Link 
-              href="/admin/products" 
+              href="/admin" 
               className="text-zinc-400 hover:text-zinc-100 transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded px-2 py-1"
               role="menuitem"
             >
@@ -250,7 +250,7 @@ export default function Home() {
                   <Link href="/rfq" className="hover:text-zinc-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded">RFQ</Link>
                 </li>
                 <li>
-                  <Link href="/admin/products" className="hover:text-zinc-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded">Admin</Link>
+                  <Link href="/admin" className="hover:text-zinc-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 rounded">Admin</Link>
                 </li>
               </ul>
             </nav>
