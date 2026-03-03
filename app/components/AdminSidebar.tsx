@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 
 const navItems = [
   { 
-    href: "/dashboard", 
+    href: "/", 
     label: "Dashboard", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -41,7 +41,7 @@ const navItems = [
     )
   },
   { 
-    href: "/admin/users", 
+    href: "/users", 
     label: "Users", 
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -16,7 +16,7 @@ export default function AdminLayout({
       <AdminSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       {/* Main content */}
-      <div className="flex-1 lg:ml-0">
+      <div className="flex-1 lg:ml-64">
         {/* Desktop header spacer for hamburger */}
         <div className="h-16 lg:hidden" />
         

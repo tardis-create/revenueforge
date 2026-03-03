@@ -59,22 +59,22 @@ export async function listUsers(role?: string): Promise<User[]> {
   
   const response = await authFetch(`/api/users?${params}`);
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch users' }));
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch users' })) as any;
     throw new Error(error.error || 'Failed to fetch users');
   }
-  const data = await response.json();
-  return data.users || [];
+  const data = await response.json() as any;
+  return data.data || [];
 }
 
 // Get a single user
 export async function getUser(id: string): Promise<User> {
   const response = await authFetch(`/api/users/${id}`);
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch user' }));
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch user' })) as any;
     throw new Error(error.error || 'Failed to fetch user');
   }
-  const data = await response.json();
-  return data.user;
+  const data = await response.json() as any;
+  return data.data;
 }
 
 // Create a new user
@@ -84,11 +84,11 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     body: JSON.stringify(input),
   });
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create user' }));
+    const error = await response.json().catch(() => ({ error: 'Failed to create user' })) as any;
     throw new Error(error.error || 'Failed to create user');
   }
-  const data = await response.json();
-  return data.user;
+  const data = await response.json() as any;
+  return data.data;
 }
 
 // Update a user
@@ -98,11 +98,11 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
     body: JSON.stringify(input),
   });
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to update user' }));
+    const error = await response.json().catch(() => ({ error: 'Failed to update user' })) as any;
     throw new Error(error.error || 'Failed to update user');
   }
-  const data = await response.json();
-  return data.user;
+  const data = await response.json() as any;
+  return data.data;
 }
 
 // Delete (soft delete) a user
@@ -111,7 +111,7 @@ export async function deleteUser(id: string): Promise<void> {
     method: 'DELETE',
   });
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to delete user' }));
+    const error = await response.json().catch(() => ({ error: 'Failed to delete user' })) as any;
     throw new Error(error.error || 'Failed to delete user');
   }
 }

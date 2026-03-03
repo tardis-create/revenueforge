@@ -53,11 +53,11 @@ interface RFQ {
   created_at: string
 }
 
-const DEFAULT_TERMS = \`1. Prices are valid for 30 days from the quote date.
+const DEFAULT_TERMS = `1. Prices are valid for 30 days from the quote date.
 2. Payment terms: Net 30 days from invoice date.
 3. Delivery: Within 2-4 weeks from order confirmation.
 4. Warranty: 12 months from delivery date.
-5. Taxes: Applicable taxes extra unless mentioned otherwise.\`
+5. Taxes: Applicable taxes extra unless mentioned otherwise.`
 
 export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([])
@@ -391,13 +391,9 @@ export default function QuotesPage() {
 
         {/* Create Quote Modal */}
         {showCreateModal && (
-          <CreateQuoteModal
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={(newQuote) => {
-              setQuotes([...quotes, newQuote])
-              setShowCreateModal(false)
-            }}
-          />
+          <div className="p-4 bg-yellow-500/20 text-yellow-400 rounded-lg">
+            Create Quote Modal not implemented
+          </div>
         )}
     </div>
   )

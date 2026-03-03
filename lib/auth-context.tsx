@@ -112,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       if (!response.ok) {
         throw new Error(data.error || 'Invalid email or password');
