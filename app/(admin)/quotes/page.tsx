@@ -632,6 +632,7 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     description: string
     quantity: number
     unit_price: number
+    total_price: number
     product_name: string
   }>>([])
 
@@ -643,7 +644,7 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           }
         })
-        const data = await response.json()
+        const data = await response.json() as { leads?: RFQ[] }
         if (data.leads && Array.isArray(data.leads)) {
           // Filter leads that haven't been quoted yet - status is not 'quoted'
           const availableLeads = (data.leads as RFQ[]).filter((rfq: RFQ) => rfq.status !== 'quoted')
@@ -677,6 +678,7 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       description: '',
       quantity: 1,
       unit_price: 0,
+      total_price: 0,
       product_name: ''
     }])
   }
@@ -844,7 +846,7 @@ function CreateQuoteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               
               {items.length === 0 ? (
                 <div className="text-center py-8 bg-zinc-800/30 rounded-lg border border-zinc-800">
-                  <p className="text-zinc-500">No items added yet. Click "Add Item" to add line items.</p>
+                  <p className="text-zinc-500">No items added yet. Click &quot;Add Item&quot; to add line items.</p>
                 </div>
               ) : (
                 <div className="space-y-3">

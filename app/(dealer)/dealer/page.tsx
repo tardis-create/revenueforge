@@ -49,7 +49,7 @@ export default function DealerDashboard() {
       try {
         const response = await fetch(`/api/leads?dealer_id=${user.id}&limit=1`)
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json() as { pagination?: { total: number } }
           setStats(prev => ({ ...prev, assignedLeads: data.pagination?.total || 0 }))
         }
       } catch (error) {

@@ -13,5 +13,5 @@ node_modules/
 
 # Build output
 .next/
-.vercel/
+#.vercel/
 tsconfig.tsbuildinfo
