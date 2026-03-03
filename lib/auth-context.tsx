@@ -75,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.setItem(TOKEN_KEY, data.token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      // Set cookie for middleware auth check
+      document.cookie = `token=${data.token}; path=/; max-age=604800; SameSite=Lax`;
       setState({ user, isLoading: false, isAuthenticated: true, error: null });
 
       router.push(user.role === 'dealer' ? '/dealer' : '/admin');
@@ -106,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    document.cookie = 'token=; path=/; max-age=0';
     setState({ user: null, isLoading: false, isAuthenticated: false, error: null });
     router.push('/login');
   }, [router]);

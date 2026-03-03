@@ -340,11 +340,13 @@ function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
 
-          {product.price_range && (
+          {(product.base_price || product.price) ? (
             <p className="text-sm font-semibold text-zinc-100">
-              {product.price_range}
+              ₹{((product.base_price || product.price || 0)).toLocaleString('en-IN')}
             </p>
-          )}
+          ) : product.price_range ? (
+            <p className="text-sm font-semibold text-zinc-100">{product.price_range}</p>
+          ) : null}
         </div>
       </LiquidCard>
     </Link>

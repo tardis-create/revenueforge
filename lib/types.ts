@@ -10,6 +10,7 @@ export interface Product {
   technical_specs: Record<string, string> | null;
   price_range: string | null;
   price: number | null;
+  base_price?: number | null;
   image_url: string | null;
   stock: number | null;
   is_active: boolean;
@@ -26,6 +27,7 @@ export interface ProductInput {
   technical_specs?: Record<string, string>;
   price_range?: string;
   price?: number;
+  base_price?: number;
   image_url?: string;
   stock?: number;
   is_active?: boolean;
