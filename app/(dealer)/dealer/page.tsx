@@ -67,6 +67,22 @@ export default function DealerDashboard() {
           credentials: 'include',
         })
         
+        // Fetch products count
+        let activeProducts = 0
+        try {
+          const productsRes = await fetch(`${API_BASE_URL}/api/products?limit=1`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          if (productsRes.ok) {
+            const productsData = await productsRes.json() as any
+            activeProducts = productsData.pagination?.total || productsData.products?.length || 0
+          }
+        } catch (productsErr) {
+          console.error('Error fetching products:', productsErr)
+        }
+        
         if (!ordersRes.ok) {
           throw new Error('Failed to fetch orders')
         }
@@ -104,7 +120,7 @@ export default function DealerDashboard() {
           pendingOrders,
           totalRevenue,
           totalCommission,
-          activeProducts: 24, // Could fetch from products API
+          activeProducts,
         })
         
         setRecentOrders(transformedOrders)

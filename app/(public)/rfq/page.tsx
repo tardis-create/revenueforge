@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
@@ -57,7 +57,7 @@ const initialFormData: FormData = {
   additionalNotes: "",
 };
 
-export default function RFQForm() {
+function RFQFormContent() {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -564,5 +564,20 @@ export default function RFQForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RFQForm() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen overflow-hidden">
+        <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-pulse text-zinc-500">Loading...</div>
+        </div>
+      </div>
+    }>
+      <RFQFormContent />
+    </Suspense>
   );
 }

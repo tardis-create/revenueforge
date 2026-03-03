@@ -102,12 +102,31 @@ export default function DealerCommissionsPage() {
     return matchesStatus
   })
 
+  // Calculate performance metrics from commissions data
+  const now = new Date()
+  const thisMonth = now.getMonth()
+  const thisYear = now.getFullYear()
+  
+  const thisMonthCommissions = commissions.filter(c => {
+    const commissionDate = new Date(c.date)
+    return commissionDate.getMonth() === thisMonth && commissionDate.getFullYear() === thisYear
+  })
+  
+  const thisMonthEarnings = thisMonthCommissions.reduce((sum, c) => sum + c.amount, 0)
+  
+  // Calculate monthly target progress (default target: $2000/month)
+  const MONTHLY_TARGET = 2000
+  const targetProgress = Math.min(100, Math.round((thisMonthEarnings / MONTHLY_TARGET) * 100))
+  
   const stats = {
     totalEarned: commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0),
     pendingPayment: commissions.filter(c => c.status === 'approved').reduce((sum, c) => sum + c.amount, 0),
     awaitingApproval: commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0),
     totalCommissions: commissions.length,
     averageCommission: commissions.length > 0 ? commissions.reduce((sum, c) => sum + c.amount, 0) / commissions.length : 0,
+    thisMonthEarnings,
+    targetProgress,
+    monthlyTarget: MONTHLY_TARGET,
   }
 
   const recentPayouts = commissions.filter(c => c.status === 'paid').slice(0, 3)
@@ -414,19 +433,19 @@ export default function DealerCommissionsPage() {
                       <div>
                         <div className="flex justify-between text-sm mb-2">
                           <span className="text-zinc-400">Monthly Target</span>
-                          <span className="font-semibold text-zinc-100">75%</span>
+                          <span className="font-semibold text-zinc-100">{stats.targetProgress}%</span>
                         </div>
                         <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-                          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full" style={{ width: '75%' }} />
+                          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full" style={{ width: `${stats.targetProgress}%` }} />
                         </div>
                       </div>
                       <div className="flex justify-between items-center pt-2">
                         <span className="text-sm text-zinc-400">This Month</span>
-                        <span className="text-lg font-bold text-zinc-100">$1,760</span>
+                        <span className="text-lg font-bold text-zinc-100">${stats.thisMonthEarnings.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-zinc-500">Target</span>
-                        <span className="text-sm text-zinc-500">$2,500</span>
+                        <span className="text-sm text-zinc-500">${stats.monthlyTarget.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
