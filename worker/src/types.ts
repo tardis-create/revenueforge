@@ -74,3 +74,22 @@ export interface ProductInput {
   category: string;
   in_stock?: boolean | number;
 }
+
+export interface RFQSubmission {
+  id: string;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  service_type: string | null;
+  project_description: string | null;
+  estimated_budget: string | null;
+  timeline: string | null;
+  quantity: number | null;
+  unit: string | null;
+  lead_id: string | null;
+  status: 'new' | 'reviewing' | 'quoted' | 'accepted' | 'rejected';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}

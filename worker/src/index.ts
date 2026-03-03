@@ -14,6 +14,7 @@ import auditLog from './routes/auditLog';
 import auth from './routes/auth';
 import notifications from './routes/notifications';
 import quotes from './routes/quotes';
+import rfqs from './routes/rfq';
 import { createRateLimiter } from './middleware/rateLimiter';
 import type { Env } from './types';
 
@@ -114,6 +115,7 @@ app.route('/api/audit-log', auditLog);
 app.route('/api/auth', auth);
 app.route('/api/notifications', notifications);
 app.route('/api/quotes', quotes);
+app.route('/api/rfqs', rfqs);
 
 // ── Error handlers ────────────────────────────────────────────────────────────
 

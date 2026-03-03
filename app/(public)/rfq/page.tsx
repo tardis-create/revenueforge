@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
@@ -39,14 +39,12 @@ interface FormErrors {
 interface Product {
   id: string;
   name: string;
-  sku: string;
-  category: string;
-  industry: string;
   description: string | null;
-  technical_specs: Record<string, string> | null;
-  price_range: string | null;
-  price: number | null;
-  image_url: string | null;
+  price: number;
+  category: string;
+  in_stock: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const initialFormData: FormData = {
@@ -61,7 +59,7 @@ const initialFormData: FormData = {
   additionalNotes: "",
 };
 
-export default function RFQForm() {
+function RFQFormContent() {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -80,16 +78,16 @@ export default function RFQForm() {
       setLoadingProduct(true);
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
-        const data = await response.json() as { success: boolean; data?: Product };
+        const data = await response.json() as { product?: Product; error?: string };
         
-        if (data.success && data.data) {
-          const product = data.data;
+        if (data.product) {
+          const product = data.product;
           setProductData(product);
           
           // Pre-fill form with product details
           setFormData((prev) => ({
             ...prev,
-            productRequirements: `Product: ${product.name}\nSKU: ${product.sku}\nCategory: ${product.category}\nIndustry: ${product.industry}${product.description ? `\n\nDescription: ${product.description}` : ''}${product.price_range ? `\nPrice Range: ${product.price_range}` : ''}`,
+            productRequirements: `Product: ${product.name}\nCategory: ${product.category}\n${product.description ? `Description: ${product.description}` : ''}\nPrice: ₹${product.price}\nIn Stock: ${product.in_stock > 0 ? 'Yes' : 'No'}`,
           }));
         }
       } catch (error) {
@@ -569,5 +567,24 @@ export default function RFQForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RFQFormLoading() {
+  return (
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+      <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+      </div>
+    </div>
+  );
+}
+
+export default function RFQForm() {
+  return (
+    <Suspense fallback={<RFQFormLoading />}>
+      <RFQFormContent />
+    </Suspense>
   );
 }
