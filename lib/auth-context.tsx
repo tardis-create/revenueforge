@@ -168,40 +168,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your registration API
-      // For now, we simulate a successful registration
-      // TODO: Replace with actual API call when backend is ready
-      
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const user: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        company,
-        role: 'user',
-      };
-
-      const mockToken = btoa(`${email}:${Date.now()}`);
-      localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-
-      setState({
-        user,
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password, company }),
       });
 
-      // Redirect to login after successful registration
-      // In a real app, you might want to auto-login or show a success message
+      const data = await response.json() as any;
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Registration successful - redirect to login
       router.push('/login?registered=true');
     } catch (error) {
       setState({
         user: null,
         isLoading: false,
         isAuthenticated: false,
-        error: 'Registration failed. Please try again.',
+        error: error instanceof Error ? error.message : 'Registration failed. Please try again.',
       });
       throw error;
     }
@@ -241,20 +230,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your password reset API
-      // TODO: Replace with actual API call when backend is ready
-      
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json() as any;
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send reset link');
+      }
 
       setState((prev) => ({ ...prev, isLoading: false }));
       
-      // Return success - in production, the API would send an email
       return;
     } catch (error) {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: 'Failed to send reset link. Please try again.',
+        error: error instanceof Error ? error.message : 'Failed to send reset link. Please try again.',
       }));
       throw error;
     }
@@ -265,14 +263,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In a real app, this would call your password reset API with the token
-      // TODO: Replace with actual API call when backend is ready
-      
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token, password }),
+      });
 
-      // Validate token exists (mock validation)
-      if (!token || token.length < 10) {
-        throw new Error('Invalid or expired reset token');
+      const data = await response.json() as any;
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid or expired reset token');
       }
 
       setState((prev) => ({ ...prev, isLoading: false }));
@@ -283,7 +286,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: 'Invalid or expired reset token',
+        error: error instanceof Error ? error.message : 'Invalid or expired reset token',
       }));
       throw error;
     }
