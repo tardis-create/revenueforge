@@ -10,6 +10,11 @@ import {
   ClickSpark,
   GlareHover
 } from '@/app/components'
+import { API_BASE_URL } from '@/lib/api'
+
+// Storage keys
+const AUTH_TOKEN_KEY = 'auth_token'
+const USER_KEY = 'user_data'
 
 export default function DealerLoginPage() {
   const router = useRouter()
@@ -22,12 +27,45 @@ export default function DealerLoginPage() {
     setIsLoading(true)
     setError('')
 
-    // MVP: Simple hardcoded auth (in production, this would be API call)
-    if (credentials.email === 'dealer@revenueforge.io' && credentials.password === 'dealer123') {
-      localStorage.setItem('dealerAuth', JSON.stringify({ email: credentials.email, name: 'Dealer Partner' }))
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          email: credentials.email, 
+          password: credentials.password 
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid email or password')
+      }
+
+      // Store auth data from API response
+      const token = data.token || data.jwt
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token)
+      }
+
+      const user = {
+        id: data.user?.id || data.user_id,
+        email: data.user?.email || credentials.email,
+        name: [data.user?.first_name, data.user?.last_name].filter(Boolean).join(' ') || credentials.email.split('@')[0],
+        role: data.user?.role || 'dealer',
+        company: data.user?.company_name,
+      }
+
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+
+      // Redirect to dealer dashboard
       router.push('/dealer')
-    } else {
-      setError('Invalid credentials. Use dealer@revenueforge.io / dealer123')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in. Please try again.')
       setIsLoading(false)
     }
   }
@@ -126,14 +164,7 @@ export default function DealerLoginPage() {
                 </ClickSpark>
               </form>
 
-              {/* Demo Credentials */}
-              <div className="mt-6 p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
-                <p className="text-xs text-zinc-400 font-medium mb-2">Demo Credentials:</p>
-                <p className="text-xs text-zinc-500">
-                  Email: dealer@revenueforge.io<br />
-                  Password: dealer123
-                </p>
-              </div>
+
             </div>
           </GlareHover>
         </AnimatedContent>
