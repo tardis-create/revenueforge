@@ -9,6 +9,29 @@ import {
   ErrorState
 } from '@/app/components'
 
+// Get auth token from localStorage
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
+}
+
+// API fetch helper with auth
+async function authFetch(path: string, options?: RequestInit): Promise<Response> {
+  const token = getAuthToken();
+  const API_BASE_URL = 'https://revenueforge-api.pronitopenclaw.workers.dev';
+  const url = `${API_BASE_URL}${path}`;
+  
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...options?.headers,
+    },
+    credentials: 'include',
+  });
+}
+
 interface Dealer {
   id: string
   company_name: string
@@ -22,6 +45,18 @@ interface Dealer {
   joined_date: string
 }
 
+interface ApiDealer {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  company: string | null
+  region: string | null
+  status: string
+  commission_rate: number
+  created_at: string
+}
+
 export default function DealersPage() {
   const [dealers, setDealers] = useState<Dealer[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,74 +68,29 @@ export default function DealersPage() {
     setError(null)
     
     try {
-      // Simulate API call with potential failure
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await authFetch('/api/dealers?limit=100')
       
-      // Mock data
-      const mockDealers: Dealer[] = [
-        {
-          id: 'DLR-001',
-          company_name: 'Industrial Supply Co',
-          contact_person: 'John Smith',
-          email: 'john@industrial-supply.com',
-          phone: '+1-555-1001',
-          region: 'North America',
-          status: 'active',
-          commission_rate: 15,
-          total_sales: 245000,
-          joined_date: '2025-06-15',
-        },
-        {
-          id: 'DLR-002',
-          company_name: 'Tech Solutions Ltd',
-          contact_person: 'Emma Davis',
-          email: 'emma@techsol.com',
-          phone: '+44-20-7123-4567',
-          region: 'Europe',
-          status: 'active',
-          commission_rate: 12,
-          total_sales: 189000,
-          joined_date: '2025-08-22',
-        },
-        {
-          id: 'DLR-003',
-          company_name: 'Asia Pacific Industries',
-          contact_person: 'David Chen',
-          email: 'david@apac-ind.com',
-          phone: '+65-6123-4567',
-          region: 'Asia Pacific',
-          status: 'pending',
-          commission_rate: 10,
-          total_sales: 0,
-          joined_date: '2026-02-20',
-        },
-        {
-          id: 'DLR-004',
-          company_name: 'Global Parts Inc',
-          contact_person: 'Maria Garcia',
-          email: 'maria@globalparts.com',
-          phone: '+1-555-2002',
-          region: 'North America',
-          status: 'suspended',
-          commission_rate: 15,
-          total_sales: 89000,
-          joined_date: '2025-03-10',
-        },
-        {
-          id: 'DLR-005',
-          company_name: 'EuroTech Distribution',
-          contact_person: 'Pierre Dubois',
-          email: 'pierre@eurotech.eu',
-          phone: '+33-1-23-45-67-89',
-          region: 'Europe',
-          status: 'active',
-          commission_rate: 14,
-          total_sales: 156000,
-          joined_date: '2025-11-05',
-        },
-      ]
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: 'Failed to fetch dealers' }))
+        throw new Error(errData.error || 'Failed to fetch dealers')
+      }
       
-      setDealers(mockDealers)
+      const data = await response.json() as { data: ApiDealer[] }
+      const apiDealers: Dealer[] = (data.data || []).map((dealer: ApiDealer) => ({
+        id: dealer.id,
+        company_name: dealer.company || 'N/A',
+        contact_person: dealer.name || 'N/A',
+        email: dealer.email || 'N/A',
+        phone: dealer.phone || 'N/A',
+        region: dealer.region || 'N/A',
+        // Map 'inactive' to 'suspended' for display, or keep as-is if valid
+        status: dealer.status === 'inactive' ? 'suspended' : (dealer.status as 'active' | 'pending' | 'suspended'),
+        commission_rate: dealer.commission_rate || 0,
+        total_sales: 0, // Would need to calculate from commissions/leads
+        joined_date: dealer.created_at ? new Date(dealer.created_at).toISOString().split('T')[0] : 'N/A',
+      }))
+      
+      setDealers(apiDealers)
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch dealers')
       setError(error)
