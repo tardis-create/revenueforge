@@ -26,11 +26,22 @@ export function ApiError({ message, title, error, onRetry }: ApiErrorProps) {
 }
 
 export function ErrorBoundaryFallback({ error }: { error: Error }) {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-zinc-100 mb-4">Something went wrong</h2>
-        <p className="text-zinc-400 mb-6">{error.message}</p>
+        <p className="text-zinc-400 mb-6">
+          {isDevelopment 
+            ? error.message 
+            : 'An unexpected error occurred. Please try again later.'}
+        </p>
+        {isDevelopment && error.stack && (
+          <pre className="text-left text-xs text-red-400 bg-red-500/10 p-3 rounded-lg mb-6 overflow-auto max-w-md">
+            {error.stack}
+          </pre>
+        )}
         <button
           onClick={() => window.location.reload()}
           className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
 
 interface AdminHeaderProps {
   onMenuClick: () => void
@@ -12,14 +13,24 @@ interface AdminHeaderProps {
 export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const { user, logout } = useAuth()
   
-  // Mock user data - in production this would come from auth context
-  const user = {
-    name: "Admin User",
-    email: "admin@revenueforge.com",
-    avatar: null, // Will show initials if no avatar
-    role: "Administrator"
+  // Get user data from auth context or fallback to localStorage
+  const getUser = () => {
+    if (user) return user
+    if (typeof window === 'undefined') return null
+    try {
+      const userData = localStorage.getItem('user_data')
+      return userData ? JSON.parse(userData) : null
+    } catch {
+      return null
+    }
   }
+  
+  const currentUser = getUser()
+  const userName = currentUser?.name || currentUser?.email?.split('@')[0] || "User"
+  const userEmail = currentUser?.email || ""
+  const userRole = currentUser?.role || "user"
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -45,9 +56,9 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
     return () => document.removeEventListener("keydown", handleEscape)
   }, [])
 
-  const initials = user.name
+  const initials = userName
     .split(" ")
-    .map(n => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2)
@@ -113,8 +124,8 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
               
               {/* User info - hidden on smaller screens */}
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-zinc-100">{user.name}</p>
-                <p className="text-xs text-zinc-500">{user.role}</p>
+                <p className="text-sm font-medium text-zinc-100">{userName}</p>
+                <p className="text-xs text-zinc-500">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</p>
               </div>
               
               {/* Dropdown arrow */}
@@ -150,8 +161,8 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
                         <span className="text-sm font-semibold text-white">{initials}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-zinc-100">{user.name}</p>
-                        <p className="text-xs text-zinc-500">{user.email}</p>
+                        <p className="text-sm font-medium text-zinc-100">{userName}</p>
+                        <p className="text-xs text-zinc-500">{userEmail}</p>
                       </div>
                     </div>
                   </div>
@@ -188,18 +199,24 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
 
                   {/* Sign out */}
                   <div className="border-t border-zinc-800/50 py-2">
-                    <Link href="/login" onClick={() => setProfileOpen(false)}>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false)
+                        logout()
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                      role="menuitem"
+                    >
                       <motion.div
                         whileHover={{ x: 4 }}
-                        className="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
-                        role="menuitem"
+                        className="flex items-center gap-3"
                       >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                         <span className="text-sm">Sign out</span>
                       </motion.div>
-                    </Link>
+                    </button>
                   </div>
                 </motion.div>
               )}
