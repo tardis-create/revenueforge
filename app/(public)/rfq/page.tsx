@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
@@ -47,7 +47,7 @@ const initialFormData: FormData = {
   additionalNotes: "",
 };
 
-export default function RFQForm() {
+function RFQFormInner() {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -539,5 +539,13 @@ export default function RFQForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RFQForm() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-zinc-950 text-zinc-400">Loading...</div>}>
+      <RFQFormInner />
+    </Suspense>
   );
 }

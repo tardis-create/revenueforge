@@ -1,0 +1,67 @@
+{
+  "version": 3,
+  "middleware": {},
+  "functions": {
+    "/api/health/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/health/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/798.js",
+        "server/app/api/health/route.js"
+      ],
+      "name": "app/api/health/route",
+      "page": "/api/health/route",
+      "matchers": [
+        {
+          "regexp": "^/api/health$",
+          "originalSource": "/api/health"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "YQWleWqZVlHwlQkZ8HilU",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "/x8vYJeh/6gH//Va9uAwXNI8Yal8EzajX8t9yWq6TRs=",
+        "__NEXT_PREVIEW_MODE_ID": "7376f51bc0da9abdd9af8405d8f058ce",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "67723643df817e30185a78bfae50ba94645f1751e89fa49cf9c4f02fd070ccaa",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "dcdf68a7e4461f407a2a0b5ad6b40c5ea4e3f75515f098dfe4b7403720ba3042"
+      }
+    },
+    "/api/[[...routes]]/route": {
+      "files": [
+        "server/server-reference-manifest.js",
+        "server/app/api/[[...routes]]/route_client-reference-manifest.js",
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/edge-chunks/798.js",
+        "server/app/api/[[...routes]]/route.js"
+      ],
+      "name": "app/api/[[...routes]]/route",
+      "page": "/api/[[...routes]]/route",
+      "matchers": [
+        {
+          "regexp": "^/api(?:/(?<routes>.+?))?$",
+          "originalSource": "/api/[[...routes]]"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "YQWleWqZVlHwlQkZ8HilU",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "/x8vYJeh/6gH//Va9uAwXNI8Yal8EzajX8t9yWq6TRs=",
+        "__NEXT_PREVIEW_MODE_ID": "7376f51bc0da9abdd9af8405d8f058ce",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "67723643df817e30185a78bfae50ba94645f1751e89fa49cf9c4f02fd070ccaa",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "dcdf68a7e4461f407a2a0b5ad6b40c5ea4e3f75515f098dfe4b7403720ba3042"
+      }
+    }
+  },
+  "sortedMiddleware": []
+}

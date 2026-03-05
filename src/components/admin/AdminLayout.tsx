@@ -26,7 +26,27 @@ export function AdminLayout({
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
-    } else {
+      setIsLoading(false)
+      return
+    }
+    // Validate token and check admin role
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const isExpired = payload.exp && payload.exp * 1000 < Date.now()
+      if (isExpired) {
+        localStorage.removeItem('token')
+        router.push('/login')
+        setIsLoading(false)
+        return
+      }
+      if (payload.role !== 'admin' && payload.role !== 'superadmin') {
+        router.push('/')
+        setIsLoading(false)
+        return
+      }
+      setIsAuthenticated(true)
+    } catch {
+      // Invalid token format — could be non-JWT, allow if token exists
       setIsAuthenticated(true)
     }
     setIsLoading(false)
@@ -50,7 +70,7 @@ export function AdminLayout({
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-[280px]">
         {/* Header with user menu */}
         <Header title={title} />
         

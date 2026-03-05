@@ -116,7 +116,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
       {/* Sidebar */}
       <motion.aside
-        initial={isMobile ? { x: -280 } : false}
+        initial={false}
         animate={isMobile ? { x: isOpen ? 0 : -280 } : { x: 0 }}
         transition={{
           type: "spring",
@@ -126,8 +126,6 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         className={`
           fixed top-0 left-0 h-full w-[280px] z-50
           bg-zinc-900/95 backdrop-blur-lg border-r border-zinc-800/50
-          ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
-          lg:translate-x-0 lg:static lg:z-auto
         `}
       >
         <div className="flex flex-col h-full">

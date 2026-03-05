@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { MobileNav } from "./components/MobileNav";
 import { OfflineIndicator } from "./components/NetworkStatus";
+import { ToastProvider } from "./components/Toast";
 
 export const metadata: Metadata = {
   title: {
@@ -64,9 +65,11 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>
-        <OfflineIndicator />
-        {children}
-        <MobileNav />
+        <ToastProvider>
+          <OfflineIndicator />
+          {children}
+          <MobileNav />
+        </ToastProvider>
       </body>
     </html>
   );
