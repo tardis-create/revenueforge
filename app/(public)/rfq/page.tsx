@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
   BlurText, 
@@ -47,11 +48,31 @@ const initialFormData: FormData = {
 };
 
 export default function RFQForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Pre-fill product requirements if ?product=[id] query param present
+  useEffect(() => {
+    const productId = searchParams.get("product");
+    if (productId) {
+      fetch(`${API_BASE_URL}/api/products/${productId}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data: any) => {
+          if (data?.success && data?.data) {
+            const product = data.data;
+            setFormData((prev) => ({
+              ...prev,
+              productRequirements: `${product.name}${product.description ? ` - ${product.description}` : ""}`,
+            }));
+          }
+        })
+        .catch(() => {}); // silent fail — pre-fill is best-effort
+    }
+  }, [searchParams]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -124,8 +145,15 @@ export default function RFQForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...formData,
-          quantity: Number(formData.quantity),
+          company_name: formData.companyName,
+          contact_name: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          service_type: formData.productRequirements,
+          project_description: formData.productRequirements,
+          estimated_budget: `${formData.quantity} ${formData.unit}`,
+          timeline: formData.deliveryTimeline,
+          additional_notes: formData.additionalNotes,
         }),
       });
 
