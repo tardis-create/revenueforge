@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
@@ -19,14 +19,29 @@ export function AdminLayout({
 }: AdminLayoutProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Simple auth check - redirect if no token
-  // In production, this would be more robust
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
-      // Will be handled by useEffect to avoid hydration mismatch
+      router.push('/login')
+    } else {
+      setIsAuthenticated(true)
     }
+    setIsLoading(false)
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+        <div className="text-zinc-400">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

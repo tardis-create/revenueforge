@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -87,6 +88,16 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <>
@@ -105,8 +116,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
       {/* Sidebar */}
       <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: isOpen ? 0 : -280 }}
+        initial={isMobile ? { x: -280 } : false}
+        animate={isMobile ? { x: isOpen ? 0 : -280 } : { x: 0 }}
         transition={{
           type: "spring",
           stiffness: 300,
@@ -115,6 +126,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         className={`
           fixed top-0 left-0 h-full w-[280px] z-50
           bg-zinc-900/95 backdrop-blur-lg border-r border-zinc-800/50
+          ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
           lg:translate-x-0 lg:static lg:z-auto
         `}
       >
