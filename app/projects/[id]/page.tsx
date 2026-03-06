@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { BlurText, AnimatedContent, LoadingSkeleton, Breadcrumbs } from '@/app/components'
 import { apiFetch } from '@/lib/api'
+import { getDocsByProjectId, createDoc, updateDoc, deleteDoc } from '@/lib/documents'
+import type { Document } from '@/lib/types'
 
 // Types
 interface Project {
@@ -144,8 +146,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [agents, setAgents] = useState<ProjectAgent[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [decisions, setDecisions] = useState<Decision[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null)
 
   const fetchProjectData = async () => {
     setLoading(true)
@@ -179,6 +183,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         const decisionsData = await decisionsRes.json()
         setDecisions((decisionsData.decisions || decisionsData || []) as Decision[])
       }
+      
+      // Fetch project documents
+      const docs = await getDocsByProjectId(resolvedParams.id);
+      setDocuments(docs);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -189,6 +198,52 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     fetchProjectData()
   }, [resolvedParams.id])
+
+  const handleCreateDoc = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get('title') as string;
+    const doc_type = formData.get('doc_type') as Document['doc_type'];
+
+    if (title && doc_type) {
+      try {
+        const newDoc = await createDoc(resolvedParams.id, { title, doc_type });
+        setDocuments([...documents, newDoc]);
+        (event.target as HTMLFormElement).reset();
+      } catch (error) {
+        console.error("Failed to create document", error);
+      }
+    }
+  };
+
+  const handleUpdateDoc = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingDoc) return;
+
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get('title') as string;
+    const doc_type = formData.get('doc_type') as Document['doc_type'];
+    
+    try {
+      const updated = await updateDoc(editingDoc.id, { title, doc_type });
+      setDocuments(documents.map(d => d.id === updated.id ? updated : d));
+      setEditingDoc(null);
+    } catch (error) {
+      console.error("Failed to update document", error);
+    }
+  };
+  
+  const handleDeleteDoc = async (docId: string) => {
+    if (window.confirm("Are you sure you want to delete this document?")) {
+      try {
+        await deleteDoc(docId);
+        setDocuments(documents.filter(d => d.id !== docId));
+      } catch (error) {
+        console.error("Failed to delete document", error);
+      }
+    }
+  };
+
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -271,6 +326,69 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-xl font-semibold">{formatCurrency(project.budget)}</p>
           </motion.div>
         </div>
+
+        {/* Documents Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-6 mb-6"
+        >
+          <h2 className="text-xl font-semibold mb-4">Documents</h2>
+          {editingDoc ? (
+            <form onSubmit={handleUpdateDoc} className="space-y-4">
+              <input
+                name="title"
+                defaultValue={editingDoc.title}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white"
+                required
+              />
+              <select
+                name="doc_type"
+                defaultValue={editingDoc.doc_type}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white"
+                required
+              >
+                <option value="specification">Specification</option>
+                <option value="report">Report</option>
+                <option value="invoice">Invoice</option>
+                <option value="other">Other</option>
+              </select>
+              <div className="flex gap-2">
+                <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md text-white">Update Document</button>
+                <button type="button" onClick={() => setEditingDoc(null)} className="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 rounded-md">Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div className="space-y-3 mb-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg">
+                    <div>
+                      <p className="font-medium">{doc.title}</p>
+                      <p className="text-sm text-zinc-500">{doc.doc_type} - Last updated: {formatDateTime(doc.updated_at)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingDoc(doc)} className="text-blue-400 hover:text-blue-300">Edit</button>
+                      <button onClick={() => handleDeleteDoc(doc.id)} className="text-red-400 hover:text-red-300">Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={handleCreateDoc} className="flex gap-2">
+                <input name="title" placeholder="New document title" className="flex-grow bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white" required />
+                <select name="doc_type" className="bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white" required>
+                  <option value="specification">Specification</option>
+                  <option value="report">Report</option>
+                  <option value="invoice">Invoice</option>
+                  <option value="other">Other</option>
+                </select>
+                <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-md text-white">Add</button>
+              </form>
+            </>
+          )}
+        </motion.div>
+
 
         {/* Tasks Section */}
         <motion.div

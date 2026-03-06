@@ -9,9 +9,7 @@ export interface Product {
   description: string | null;
   technical_specs: Record<string, string> | null;
   price_range: string | null;
-  price: number | null;
   image_url: string | null;
-  stock: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -25,9 +23,7 @@ export interface ProductInput {
   description?: string;
   technical_specs?: Record<string, string>;
   price_range?: string;
-  price?: number;
   image_url?: string;
-  stock?: number;
   is_active?: boolean;
 }
 
@@ -125,4 +121,15 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: Date;
   retryAfter?: number;
+}
+
+// Document Types
+export interface Document {
+  id: string;
+  project_id: string;
+  title: string;
+  doc_type: 'specification' | 'report' | 'invoice' | 'other';
+  content_url?: string;
+  created_at: string;
+  updated_at: string;
 }
