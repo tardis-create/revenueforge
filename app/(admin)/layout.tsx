@@ -17,7 +17,7 @@ export default function AdminLayout({
       <AdminSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-[280px]">
         {/* Header with user menu */}
         <AdminHeader 
           onMenuClick={() => setSidebarOpen(!sidebarOpen)} 

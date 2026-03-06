@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
-// Mock user type - in production this would come from auth context
 interface User {
   name: string
   email: string
@@ -18,10 +17,34 @@ interface AdminHeaderProps {
   sidebarOpen?: boolean
 }
 
-const mockUser: User = {
-  name: "Admin User",
-  email: "admin@revenueforge.com",
-  role: "admin",
+// Get user from localStorage (stores: { token, user: { id, email, name, role } })
+function getStoredUser(): User | null {
+  if (typeof window === "undefined") return null
+  try {
+    const authData = localStorage.getItem("auth")
+    if (authData) {
+      const parsed = JSON.parse(authData)
+      if (parsed.user) {
+        return {
+          name: parsed.user.name || parsed.user.email || "Admin User",
+          email: parsed.user.email || "",
+          role: parsed.user.role || "admin",
+        }
+      }
+    }
+    // Fallback: check for legacy token-only auth
+    const token = localStorage.getItem("token")
+    if (token) {
+      return {
+        name: "Admin User",
+        email: "admin@revenueforge.com",
+        role: "admin",
+      }
+    }
+  } catch (e) {
+    console.error("Error reading auth from localStorage:", e)
+  }
+  return null
 }
 
 const roleColors = {
@@ -41,6 +64,15 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
   const router = useRouter()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [user, setUser] = useState<User | null>(null)
+
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const storedUser = getStoredUser()
+    if (storedUser) {
+      setUser(storedUser)
+    }
+  }, [])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -55,9 +87,12 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
   }, [])
 
   const handleLogout = () => {
-    // In production, this would call logout API and clear auth state
+    // Clear all auth tokens from localStorage
+    localStorage.removeItem("auth")
+    localStorage.removeItem("token")
+    localStorage.removeItem("dealerAuth")
     setUserMenuOpen(false)
-    router.push("/")
+    router.push("/admin")
   }
 
   // Get current page title from pathname
@@ -65,6 +100,8 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
     const path = pathname.replace("/admin", "").split("/")[1] || "dashboard"
     return path.charAt(0).toUpperCase() + path.slice(1)
   }
+
+  const currentUser = user || { name: "Guest", email: "", role: "viewer" as const }
 
   return (
     <header className="sticky top-0 z-20 bg-zinc-900/80 backdrop-blur-lg border-b border-zinc-800/50">
@@ -137,21 +174,21 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
               {/* Avatar */}
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
                 <span className="text-white font-semibold text-sm">
-                  {mockUser.name.charAt(0).toUpperCase()}
+                  {currentUser.name.charAt(0).toUpperCase()}
                 </span>
               </div>
 
               {/* Name and role (hidden on mobile) */}
               <div className="hidden sm:flex flex-col items-start">
                 <span className="text-sm font-medium text-zinc-200">
-                  {mockUser.name}
+                  {currentUser.name}
                 </span>
                 <span
                   className={`text-xs px-1.5 py-0.5 rounded border ${
-                    roleColors[mockUser.role]
+                    roleColors[currentUser.role]
                   }`}
                 >
-                  {roleLabels[mockUser.role]}
+                  {roleLabels[currentUser.role]}
                 </span>
               </div>
 
@@ -185,9 +222,9 @@ export function AdminHeader({ onMenuClick, sidebarOpen }: AdminHeaderProps) {
                   {/* User info header */}
                   <div className="px-4 py-3 border-b border-zinc-700/50">
                     <p className="text-sm font-medium text-zinc-200">
-                      {mockUser.name}
+                      {currentUser.name}
                     </p>
-                    <p className="text-xs text-zinc-500">{mockUser.email}</p>
+                    <p className="text-xs text-zinc-500">{currentUser.email}</p>
                   </div>
 
                   {/* Menu items */}

@@ -156,8 +156,11 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
             </p>
             
             {navItems.map((item) => {
-              const isActive = pathname === item.href || 
-                (item.href !== "/" && pathname.startsWith(item.href))
+              // Dashboard (/admin) should only be active on exact match, not sub-paths
+              const isDashboard = item.href === "/admin"
+              const isActive = isDashboard 
+                ? pathname === "/admin"
+                : pathname === item.href || pathname.startsWith(item.href + "/")
               
               return (
                 <Link key={item.href} href={item.href}>
