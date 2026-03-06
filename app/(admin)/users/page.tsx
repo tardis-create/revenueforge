@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatedContent, EmptyState } from '@/app/components'
+import { AnimatedContent, EmptyState, AdminPageHeader } from '@/app/components'
 
 export default function AdminUsersPage() {
   return (
@@ -12,12 +12,13 @@ export default function AdminUsersPage() {
       <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
         <div className="max-w-7xl mx-auto">
           <AnimatedContent>
-            <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-              User Management
-            </h1>
-            <p className="text-zinc-400">
-              Manage admin users and dealers
-            </p>
+            <AdminPageHeader 
+              title="Users"
+              subtitle="Manage admin users and dealers"
+              breadcrumbs={[
+                { label: 'Users' }
+              ]}
+            />
           </AnimatedContent>
         </div>
       </header>

@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatedContent } from '@/app/components'
+import { AnimatedContent, AdminPageHeader } from '@/app/components'
 
 export default function AdminSettingsPage() {
   return (
@@ -12,12 +12,13 @@ export default function AdminSettingsPage() {
       <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
         <div className="max-w-7xl mx-auto">
           <AnimatedContent>
-            <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-              Settings
-            </h1>
-            <p className="text-zinc-400">
-              Configure your marketplace settings
-            </p>
+            <AdminPageHeader 
+              title="Settings"
+              subtitle="Configure your marketplace settings"
+              breadcrumbs={[
+                { label: 'Settings' }
+              ]}
+            />
           </AnimatedContent>
         </div>
       </header>

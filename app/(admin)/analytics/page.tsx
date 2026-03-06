@@ -8,7 +8,8 @@ import {
   Magnet,
   ClickSpark,
   GlareHover,
-  CountUp
+  CountUp,
+  AdminPageHeader
 } from '@/app/components'
 
 interface MetricCard {
@@ -80,37 +81,36 @@ export default function AnalyticsPage() {
       
       {/* Header */}
       <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="max-w-7xl mx-auto">
             <AnimatedContent>
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-                  <BlurText text="Analytics Dashboard" />
-                </h1>
-                <p className="text-zinc-400">
-                  Business insights and performance metrics
-                </p>
-              </div>
+              <AdminPageHeader 
+                title="Analytics"
+                subtitle="Business insights and performance metrics"
+                breadcrumbs={[
+                  { label: 'Analytics' }
+                ]}
+              />
             </AnimatedContent>
-            
-            {/* Time Range Selector */}
-            <AnimatedContent delay={0.1}>
-              <div className="flex items-center gap-2 p-1 bg-zinc-900/60 border border-zinc-800/50 rounded-lg backdrop-blur-sm">
-                {(['7d', '30d', '90d'] as const).map(range => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      timeRange === range
-                        ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+          </div>
+          
+          {/* Time Range Selector - moved to below title */}
+          <AnimatedContent delay={0.1}>
+            <div className="flex items-center gap-2 p-1 bg-zinc-900/60 border border-zinc-800/50 rounded-lg backdrop-blur-sm">
+              {(['7d', '30d', '90d'] as const).map(range => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    timeRange === range
+                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
                   >
                     {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
                   </button>
                 ))}
               </div>
             </AnimatedContent>
-          </div>
         </header>
 
         <main className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">

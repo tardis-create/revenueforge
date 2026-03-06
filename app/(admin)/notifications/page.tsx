@@ -7,7 +7,8 @@ import {
   FadeContent,
   Magnet,
   ClickSpark,
-  GlareHover
+  GlareHover,
+  AdminPageHeader
 } from '@/app/components'
 
 interface NotificationRule {
@@ -126,19 +127,15 @@ export default function NotificationsPage() {
       
       {/* Header */}
       <header className="relative px-6 lg:px-12 py-8 lg:py-12 border-b border-zinc-800/50">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto">
           <AnimatedContent>
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-zinc-100 mb-2">
-                <BlurText text="Notification Automation" />
-              </h1>
-              <p className="text-zinc-400">
-                Configure email and WhatsApp triggers for automated notifications
-              </p>
-            </div>
-          </AnimatedContent>
-            
-            <AnimatedContent delay={0.1}>
+            <AdminPageHeader 
+              title="Notifications"
+              subtitle="Configure email and WhatsApp triggers for automated notifications"
+              breadcrumbs={[
+                { label: 'Notifications' }
+              ]}
+            >
               <ClickSpark sparkColor="#a855f7" sparkCount={8}>
                 <button
                   onClick={() => {
@@ -153,9 +150,10 @@ export default function NotificationsPage() {
                   New Rule
                 </button>
               </ClickSpark>
-            </AnimatedContent>
-          </div>
-        </header>
+            </AdminPageHeader>
+          </AnimatedContent>
+        </div>
+      </header>
 
         <main className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
           {/* Stats */}
