@@ -139,6 +139,35 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   )
 }
 
+// Not found / no access empty state
+function ProjectNotFoundState({ isAccessDenied }: { isAccessDenied?: boolean }) {
+  return (
+    <div className="text-center py-20">
+      <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-zinc-800/80 flex items-center justify-center">
+        <svg className="w-10 h-10 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" />
+        </svg>
+      </div>
+      <h2 className="text-2xl font-semibold text-zinc-300 mb-3">
+        {isAccessDenied ? 'No access to project' : 'Project not found'}
+      </h2>
+      <p className="text-zinc-500 mb-8 max-w-sm mx-auto">
+        {isAccessDenied
+          ? "You don't have permission to view this project. Contact the project owner to request access."
+          : "This project doesn't exist or may have been deleted. Check the project ID or browse all projects."}
+      </p>
+      <div className="flex items-center justify-center gap-4">
+        <Link
+          href="/projects"
+          className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors text-sm font-medium"
+        >
+          ← All Projects
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
@@ -149,16 +178,30 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [accessDenied, setAccessDenied] = useState(false)
   const [editingDoc, setEditingDoc] = useState<Document | null>(null)
 
   const fetchProjectData = async () => {
     setLoading(true)
     setError(null)
+    setNotFound(false)
+    setAccessDenied(false)
     try {
       // Fetch project details
       const projectRes = await apiFetch(`/api/projects/${resolvedParams.id}`)
       if (!projectRes.ok) {
-        throw new Error(`Project not found: ${projectRes.status}`)
+        if (projectRes.status === 404) {
+          setNotFound(true)
+          setLoading(false)
+          return
+        }
+        if (projectRes.status === 401 || projectRes.status === 403) {
+          setAccessDenied(true)
+          setLoading(false)
+          return
+        }
+        throw new Error(`Failed to load project (${projectRes.status})`)
       }
       const projectData = await projectRes.json()
       setProject((projectData.project || projectData) as Project)
@@ -257,6 +300,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         <div className="max-w-6xl mx-auto px-6 py-8">
           <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }, { label: 'Loading...' }]} />
           <DetailSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  if (notFound || accessDenied) {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+          <ProjectNotFoundState isAccessDenied={accessDenied} />
         </div>
       </div>
     )
