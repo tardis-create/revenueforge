@@ -5,12 +5,19 @@ export const API_BASE_URL = 'https://revenueforge-api.pronitopenclaw.workers.dev
 
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
   const url = `${API_BASE_URL}${path}`
+  
+  // Get token from localStorage
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options?.headers,
+  }
+  
   return fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   })
 }
 
