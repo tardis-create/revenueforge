@@ -9,13 +9,16 @@ export function getToken(): string {
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
   const token = getToken()
   const url = `${API_BASE_URL}${path}`
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options?.headers,
+  }
+  
   return fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
+    headers,
   })
 }
 
