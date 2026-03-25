@@ -3,15 +3,18 @@
 import { useState, useEffect } from 'react'
 import type { Product } from '@/lib/types'
 import { API_BASE_URL } from '@/lib/api'
-import { 
-  BlurText, 
-  AnimatedContent, 
+import {
+  BlurText,
+  AnimatedContent,
   FadeContent,
   Magnet,
   ClickSpark,
   GlareHover,
   SpringButton
 } from '@/app/components'
+import { generateQuotePDF, downloadPDF } from '@/lib/pdf-generator'
+import { useSettings } from '@/lib/use-settings'
+import type { ClinicBranding } from '@/lib/use-settings'
 
 interface Quote {
   id: string
@@ -365,7 +368,15 @@ export default function QuotesPage() {
                               >
                                 View
                               </button>
-                              <button className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm">
+                              <button
+                                onClick={() => {
+                                  setSelectedQuote(quote)
+                                  setTimeout(() => {
+                                    document.querySelector('button[download]')?.dispatchEvent(new MouseEvent('click'))
+                                  }, 100)
+                                }}
+                                className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm"
+                              >
                                 Download
                               </button>
                             </td>
@@ -405,6 +416,8 @@ export default function QuotesPage() {
 
 function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; onClose: () => void; onStatusChange: (id: string, status: 'sent' | 'accepted' | 'rejected') => void }) {
   const [actionLoading, setActionLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const { branding } = useSettings()
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -419,6 +432,19 @@ function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; on
     await new Promise(resolve => setTimeout(resolve, 500))
     onStatusChange(quote.id, action)
     setActionLoading(false)
+  }
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true)
+    try {
+      const pdfBytes = await generateQuotePDF(quote, branding)
+      downloadPDF(pdfBytes, `Quote-${quote.id}.pdf`)
+    } catch (error) {
+      console.error('Failed to generate PDF:', error)
+      alert('Failed to generate PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
   }
 
   return (
@@ -620,8 +646,27 @@ function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; on
                 </button>
               </Magnet>
               <ClickSpark sparkColor="#a855f7" sparkCount={8}>
-                <button className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all">
-                  Download PDF
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={downloading}
+                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/30 rounded-lg text-white font-medium hover:border-purple-400/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {downloading ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Download PDF
+                    </>
+                  )}
                 </button>
               </ClickSpark>
             </div>
