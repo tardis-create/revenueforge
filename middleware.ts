@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify, decodeJwt } from 'jose';
 
 /**
  * Middleware to protect admin routes
@@ -27,7 +28,17 @@ const publicRoutes = [
   '/dealer/login',
 ];
 
-export function middleware(request: NextRequest) {
+// Get JWT secret from environment (must be set in production)
+function getJwtSecret(): Uint8Array | null {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error('[middleware] JWT_SECRET not configured - auth will fail');
+    return null;
+  }
+  return new TextEncoder().encode(secret);
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if this is a public route - allow access
@@ -45,13 +56,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for JWT cookie
+  // Check for JWT cookie (check multiple possible cookie names)
   const jwtCookie = request.cookies.get('jwt') || 
                     request.cookies.get('token') || 
                     request.cookies.get('auth_token') ||
                     request.cookies.get('pb_auth'); // PocketBase auth
 
-  // If no valid JWT cookie, redirect to login
+  // If no JWT cookie present, redirect to login
   if (!jwtCookie || !jwtCookie.value) {
     const loginUrl = new URL('/login', request.url);
     // Preserve the original URL for redirect after login
@@ -59,8 +70,39 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // User is authenticated, allow access
-  return NextResponse.next();
+  // Validate JWT token
+  const secret = getJwtSecret();
+  if (!secret) {
+    // No secret configured - deny access (shouldn't happen in production)
+    console.error('[middleware] JWT_SECRET not set, rejecting request');
+    return NextResponse.json({ error: 'Server configuration error' }, 500);
+  }
+
+  try {
+    // Verify the JWT token signature and claims
+    const { payload } = await jwtVerify(jwtCookie.value, secret);
+    
+    // Check if token has required claims
+    if (!payload.userId) {
+      console.warn('[middleware] JWT missing userId claim');
+      const loginUrl = new URL('/login', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Token is valid - allow access
+    // Optionally: you could set request headers with user info for downstream use
+    // request.headers.set('x-user-id', payload.userId as string);
+    // request.headers.set('x-user-role', payload.role as string);
+    
+    return NextResponse.next();
+  } catch (err: any) {
+    // JWT verification failed - token is invalid/expired
+    console.warn('[middleware] JWT verification failed:', err.message);
+    
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 // Configure which routes the middleware should run on

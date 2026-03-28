@@ -15,4 +15,6 @@ node_modules/
 .next/
 #.vercel/
 tsconfig.tsbuildinfo
-.next/
+
+# Webpack cache (binary files, don't commit)
+.next/cache/
