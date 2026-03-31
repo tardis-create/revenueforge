@@ -9,6 +9,11 @@ export interface Product {
   description: string | null;
   technical_specs: Record<string, string> | null;
   price_range: string | null;
+<<<<<<< HEAD
+=======
+  price: number | null;
+  base_price?: number | null;
+>>>>>>> main
   image_url: string | null;
   is_active: boolean;
   created_at: string;
@@ -23,6 +28,11 @@ export interface ProductInput {
   description?: string;
   technical_specs?: Record<string, string>;
   price_range?: string;
+<<<<<<< HEAD
+=======
+  price?: number;
+  base_price?: number;
+>>>>>>> main
   image_url?: string;
   is_active?: boolean;
 }

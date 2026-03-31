@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 import { 
   BlurText, 
@@ -35,6 +36,17 @@ interface FormErrors {
   deliveryTimeline?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  category: string;
+  in_stock: number;
+  created_at: string;
+  updated_at: string;
+}
+
 const initialFormData: FormData = {
   companyName: "",
   contactPerson: "",
@@ -47,12 +59,46 @@ const initialFormData: FormData = {
   additionalNotes: "",
 };
 
-export default function RFQForm() {
+function RFQFormContent() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadingProduct, setLoadingProduct] = useState(false);
+  const [productData, setProductData] = useState<Product | null>(null);
+
+  // Fetch product details if product query param is present
+  useEffect(() => {
+    const productId = searchParams.get("product");
+    if (!productId) return;
+
+    const fetchProduct = async () => {
+      setLoadingProduct(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
+        const data = await response.json() as { product?: Product; error?: string };
+        
+        if (data.product) {
+          const product = data.product;
+          setProductData(product);
+          
+          // Pre-fill form with product details
+          setFormData((prev) => ({
+            ...prev,
+            productRequirements: `Product: ${product.name}\nCategory: ${product.category}\n${product.description ? `Description: ${product.description}` : ''}\nPrice: ₹${product.price}\nIn Stock: ${product.in_stock > 0 ? 'Yes' : 'No'}`,
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    fetchProduct();
+  }, [searchParams]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -119,15 +165,24 @@ export default function RFQForm() {
     setSubmitStatus(null);
 
     try {
+      const payload = {
+        company_name: formData.companyName,
+        contact_name: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        service_type: formData.productRequirements,
+        unit: formData.unit,
+        timeline: formData.deliveryTimeline,
+        notes: formData.additionalNotes,
+        quantity: Number(formData.quantity),
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/rfq`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          quantity: Number(formData.quantity),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -512,5 +567,24 @@ export default function RFQForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RFQFormLoading() {
+  return (
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+      <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+      </div>
+    </div>
+  );
+}
+
+export default function RFQForm() {
+  return (
+    <Suspense fallback={<RFQFormLoading />}>
+      <RFQFormContent />
+    </Suspense>
   );
 }

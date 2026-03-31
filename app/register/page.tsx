@@ -46,7 +46,7 @@ function RegisterForm() {
     }
 
     try {
-      await register(name, email, password, company || undefined);
+      await register(name, email, password);
       setSuccess(true);
       // Redirect to login after a short delay
       setTimeout(() => {

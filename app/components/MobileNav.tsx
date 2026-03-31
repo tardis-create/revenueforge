@@ -9,7 +9,7 @@ const navItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/catalog", label: "Catalog", icon: "📦" },
   { href: "/rfq", label: "RFQ", icon: "📝" },
-  { href: "/admin/products", label: "Admin", icon: "⚙️" },
+  { href: "/admin", label: "Admin", icon: "⚙️" },
 ]
 
 export function MobileNav() {
