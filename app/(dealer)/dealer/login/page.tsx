@@ -1,36 +1,56 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { 
   BlurText, 
   AnimatedContent, 
   FadeContent,
-  Magnet,
   ClickSpark,
   GlareHover
 } from '@/app/components'
 
 export default function DealerLoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { login, isAuthenticated, user, isLoading: authLoading, error: authError, clearError } = useAuth()
+  
   const [credentials, setCredentials] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [localError, setLocalError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Redirect if already authenticated as dealer
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user?.role === 'dealer') {
+      const redirect = searchParams.get('redirect') || '/dealer'
+      router.push(redirect)
+    }
+  }, [isAuthenticated, authLoading, user, router, searchParams])
+
+  // Clear errors when inputs change
+  useEffect(() => {
+    if (authError || localError) {
+      clearError()
+      setLocalError('')
+    }
+  }, [credentials])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    setIsSubmitting(true)
+    setLocalError('')
 
-    // MVP: Simple hardcoded auth (in production, this would be API call)
-    if (credentials.email === 'dealer@revenueforge.io' && credentials.password === 'dealer123') {
-      localStorage.setItem('dealerAuth', JSON.stringify({ email: credentials.email, name: 'Dealer Partner' }))
-      router.push('/dealer')
-    } else {
-      setError('Invalid credentials. Use dealer@revenueforge.io / dealer123')
-      setIsLoading(false)
+    try {
+      await login(credentials.email, credentials.password)
+      // Auth context will handle redirect based on role
+    } catch (error) {
+      setLocalError('Invalid credentials. Please try again.')
+      setIsSubmitting(false)
     }
   }
+
+  const isLoading = authLoading || isSubmitting
 
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
@@ -81,9 +101,10 @@ export default function DealerLoginPage() {
                     type="email"
                     id="email"
                     required
+                    disabled={isLoading}
                     value={credentials.email}
                     onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                    className="w-full px-4 py-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="dealer@revenueforge.io"
                   />
                 </div>
@@ -96,17 +117,18 @@ export default function DealerLoginPage() {
                     type="password"
                     id="password"
                     required
+                    disabled={isLoading}
                     value={credentials.password}
                     onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors"
+                    className="w-full px-4 py-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                   />
                 </div>
 
-                {error && (
+                {(authError || localError) && (
                   <FadeContent>
                     <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                      {error}
+                      {localError || authError}
                     </div>
                   </FadeContent>
                 )}

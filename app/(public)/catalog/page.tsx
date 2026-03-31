@@ -265,7 +265,6 @@ export default function CatalogPage() {
   )
 }
 
-// No Results State Component
 function NoResultsState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
   return (
     <EmptyState
@@ -285,7 +284,6 @@ function NoResultsState({ hasFilters, onClearFilters }: { hasFilters: boolean; o
   )
 }
 
-// Product Card Component with LiquidCard
 function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/catalog/${product.id}`} className="block group">
@@ -294,7 +292,6 @@ function ProductCard({ product }: { product: Product }) {
         glassIntensity="medium"
         className="overflow-hidden h-full"
       >
-        {/* Product Image */}
         <div className="aspect-[16/10] bg-zinc-800/50 relative overflow-hidden -mx-6 -mt-6 mb-0">
           {product.image_url ? (
             <img
@@ -316,7 +313,6 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Product Info */}
         <div className="pt-5">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-zinc-100 group-hover:text-purple-300 transition-colors line-clamp-1">
