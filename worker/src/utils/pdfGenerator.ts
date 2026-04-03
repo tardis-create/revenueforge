@@ -90,10 +90,12 @@ function formatDate(dateStr: string): string {
 
 /**
  * Generate PDF for a quote
+ * @param type - Document type: 'quote' or 'invoice'
  */
 export async function generateQuotePDF(
   quote: QuotePDFData,
-  settings: PDFSettings
+  settings: PDFSettings,
+  type: 'quote' | 'invoice' = 'quote'
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595, 842]); // A4 size
@@ -161,7 +163,8 @@ export async function generateQuotePDF(
   yPos -= 30;
 
   // Document Title
-  page.drawText('QUOTATION', {
+  const docTitle = type === 'invoice' ? 'INVOICE' : 'QUOTATION';
+  page.drawText(docTitle, {
     x: width / 2 - 40,
     y: yPos,
     size: 18,
@@ -581,12 +584,6 @@ export async function generateInvoicePDF(
   invoice: QuotePDFData,
   settings: PDFSettings
 ): Promise<Uint8Array> {
-  // Override header to "INVOICE"
-  const invoiceData = {
-    ...invoice,
-    // Keep the same structure, just differs in presentation
-  };
-  
   // Generate with invoice-specific formatting
-  return generateQuotePDF(invoiceData, settings);
+  return generateQuotePDF(invoice, settings, 'invoice');
 }

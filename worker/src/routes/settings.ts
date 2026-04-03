@@ -6,15 +6,15 @@ const settings = new Hono<{ Bindings: Env }>();
 
 /**
  * GET /api/settings - Get all settings (public subset by default)
- * Authorization: optional for full settings
+ * Authorization: optional for full settings (requires valid JWT)
  */
-settings.get('/', async (c) => {
+settings.get('/', authMiddleware, async (c) => {
   try {
     const db = c.env.DB;
-    const authHeader = c.req.header('Authorization');
-    const isAdmin = !!authHeader;
-
-    if (!isAdmin) {
+    const user = c.get('user');
+    
+    // If no valid JWT, return only public settings
+    if (!user) {
       // Public endpoint - return public settings only
       const rows = await db.prepare(
         'SELECT key, value, category FROM settings WHERE is_public = 1'
