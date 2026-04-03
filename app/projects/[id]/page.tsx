@@ -203,28 +203,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         }
         throw new Error(`Failed to load project (${projectRes.status})`)
       }
-      const projectData = await projectRes.json()
+      const projectData = await projectRes.json() as { project?: Project } & Project
       setProject((projectData.project || projectData) as Project)
 
       // Fetch project agents
       const agentsRes = await apiFetch(`/api/projects/${resolvedParams.id}/agents`)
       if (agentsRes.ok) {
-        const agentsData = await agentsRes.json()
-        setAgents((agentsData.agents || agentsData || []) as ProjectAgent[])
+        const agentsData = await agentsRes.json() as { agents?: ProjectAgent[] } | ProjectAgent[]
+        setAgents(((agentsData as { agents?: ProjectAgent[] }).agents || agentsData || []) as ProjectAgent[])
       }
 
       // Fetch project tasks
       const tasksRes = await apiFetch(`/api/pm-tasks?project_id=${resolvedParams.id}`)
       if (tasksRes.ok) {
-        const tasksData = await tasksRes.json()
-        setTasks((tasksData.tasks || tasksData || []) as Task[])
+        const tasksData = await tasksRes.json() as { tasks?: Task[] } | Task[]
+        setTasks(((tasksData as { tasks?: Task[] }).tasks || tasksData || []) as Task[])
       }
 
       // Fetch project decisions
       const decisionsRes = await apiFetch(`/api/projects/${resolvedParams.id}/decisions`)
       if (decisionsRes.ok) {
-        const decisionsData = await decisionsRes.json()
-        setDecisions((decisionsData.decisions || decisionsData || []) as Decision[])
+        const decisionsData = await decisionsRes.json() as { decisions?: Decision[] } | Decision[]
+        setDecisions(((decisionsData as { decisions?: Decision[] }).decisions || decisionsData || []) as Decision[])
       }
       
       // Fetch project documents

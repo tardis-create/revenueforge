@@ -42,7 +42,7 @@ export default function MessagesPage() {
     try {
       const response = await fetch('/api/channels')
       if (!response.ok) throw new Error('Failed to fetch channels')
-      const data = await response.json()
+      const data = await response.json() as { channels: Channel[] }
       setChannels(data.channels || [])
     } catch (err) {
       console.error('Error fetching channels:', err)
@@ -54,7 +54,7 @@ export default function MessagesPage() {
     try {
       const response = await fetch(`/api/channels/${channelId}/messages?limit=50`)
       if (!response.ok) throw new Error('Failed to fetch messages')
-      const data = await response.json()
+      const data = await response.json() as { messages: Message[] }
       setMessages(data.messages || [])
     } catch (err) {
       console.error('Error fetching messages:', err)
@@ -77,11 +77,11 @@ export default function MessagesPage() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to send message')
+        const errData = await response.json() as { error?: string }
+        throw new Error(errData.error || 'Failed to send message')
       }
 
-      const data = await response.json()
+      const data = await response.json() as { message: Message }
       setMessages(prev => [data.message, ...prev])
       setNewMessage('')
     } catch (err) {

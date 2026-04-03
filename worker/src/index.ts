@@ -14,6 +14,9 @@ import auditLog from './routes/auditLog';
 import auth from './routes/auth';
 import notifications from './routes/notifications';
 import channels from './routes/channels';
+import settings from './routes/settings';
+import pdf from './routes/pdf';
+import quotes from './routes/quotes';
 import { createRateLimiter } from './middleware/rateLimiter';
 import type { Env } from './types';
 
@@ -114,6 +117,9 @@ app.route('/api/audit-log', auditLog);
 app.route('/api/auth', auth);
 app.route('/api/notifications', notifications);
 app.route('/api/channels', channels);
+app.route('/api/settings', settings);
+app.route('/api/pdf', pdf);
+app.route('/api/quotes', quotes);
 
 // ── Error handlers ────────────────────────────────────────────────────────────
 

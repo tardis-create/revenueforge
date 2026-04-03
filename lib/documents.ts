@@ -6,7 +6,7 @@ export async function getDocsByProjectId(projectId: string): Promise<Document[]>
   if (!res.ok) {
     throw new Error(`Failed to fetch documents: ${res.status}`);
   }
-  const data = await res.json();
+  const data = await res.json() as Record<string, unknown>;
   return (data.documents || data || []) as Document[];
 }
 

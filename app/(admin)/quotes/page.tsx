@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Product } from '@/lib/types'
-import { API_BASE_URL } from '@/lib/api'
+import { API_BASE_URL, apiFetch } from '@/lib/api'
 import {
   BlurText,
   AnimatedContent,
@@ -437,11 +437,31 @@ function QuoteDetailModal({ quote, onClose, onStatusChange }: { quote: Quote; on
   const handleDownloadPDF = async () => {
     setDownloading(true)
     try {
-      const pdfBytes = await generateQuotePDF(quote, branding)
-      downloadPDF(pdfBytes, `Quote-${quote.id}.pdf`)
+      // Try server-side PDF generation first
+      const response = await apiFetch(`/api/pdf/quotes/${quote.id}`, { 
+        method: 'POST' 
+      })
+      
+      if (response.ok) {
+        const pdfBlob = await response.blob()
+        const pdfBytes = new Uint8Array(await pdfBlob.arrayBuffer())
+        downloadPDF(pdfBytes, `Quote-${quote.id}.pdf`)
+      } else {
+        // Fallback to client-side generation
+        console.warn('Server PDF generation failed, falling back to client-side')
+        const pdfBytes = await generateQuotePDF(quote, branding)
+        downloadPDF(pdfBytes, `Quote-${quote.id}.pdf`)
+      }
     } catch (error) {
       console.error('Failed to generate PDF:', error)
-      alert('Failed to generate PDF. Please try again.')
+      // Fallback to client-side generation
+      try {
+        const pdfBytes = await generateQuotePDF(quote, branding)
+        downloadPDF(pdfBytes, `Quote-${quote.id}.pdf`)
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError)
+        alert('Failed to generate PDF. Please try again.')
+      }
     } finally {
       setDownloading(false)
     }

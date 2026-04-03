@@ -118,7 +118,7 @@ export default function ProjectsPage() {
       if (!res.ok) {
         throw new Error(`Failed to fetch projects: ${res.status}`)
       }
-      const data = await res.json()
+      const data = await res.json() as Record<string, unknown>
       setProjects((data.projects || data || []) as Project[])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
